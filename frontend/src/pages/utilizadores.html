@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CamiGest - Gestão de Utilizadores</title>
+  <link rel="icon" type="image/png" href="public/images/favicon.png">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap"
+    rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="css/modern-design.css">
+  <style>
+    body {
+      display: flex;
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .sidebar {
+      width: 260px;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      position: fixed;
+      height: 100vh;
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar-logo h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #3b82f6, #0ea5e9);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0;
+    }
+
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      flex: 1;
+    }
+
+    .sidebar ul li {
+      margin-bottom: 8px;
+    }
+
+    .sidebar ul li a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-radius: 12px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      font-weight: 500;
+      font-size: 15px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sidebar ul li a::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 3px;
+      background: #2563eb;
+      transform: scaleY(0);
+      transition: transform 0.3s;
+    }
+
+    .sidebar ul li a:hover,
+    .sidebar ul li a.active {
+      background: rgba(37, 99, 235, 0.1);
+      color: var(--text-primary);
+      transform: translateX(4px);
+    }
+
+    .sidebar ul li a.active::before {
+      transform: scaleY(1);
+    }
+
+    .sidebar-footer {
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    #logout {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    #logout:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+    }
+
+    .main {
+      flex: 1;
+      margin-left: 260px;
+      padding: 32px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .btn-add {
+      background: linear-gradient(135deg, #2563eb, #0ea5e9);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-add:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+    }
+
+    .users-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .user-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s;
+    }
+
+    .user-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(37, 99, 235, 0.3);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .user-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .user-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .user-role {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .role-fundador {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+
+    .role-supervisor {
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+    }
+
+    .role-trabalhador {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+    }
+
+    .user-info {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .user-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .action-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--primary);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: #1e293b;
+      width: 100%;
+      max-width: 450px;
+      padding: 32px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .modal-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: white;
+      margin: 0;
+    }
+
+    .close {
+      color: var(--text-muted);
+      font-size: 24px;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .close:hover {
+      color: white;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: white;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+    .btn-save {
+      flex: 1;
+      background: linear-gradient(135deg, #2563eb, #0ea5e9);
+      color: white;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-delete {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-delete:hover {
+      background: rgba(239, 68, 68, 0.2);
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <h2><i data-lucide="truck"
+          style="display:inline-block;width:26px;height:26px;vertical-align:middle;margin-right:6px"></i>CamiGest</h2>
+    </div>
+    <ul>
+      <li><a href="dashboard.html"><i data-lucide="layout-dashboard" style="width:18px;height:18px"></i> Dashboard</a>
+      </li>
+      <li><a href="entregas.html"><i data-lucide="package" style="width:18px;height:18px"></i> Entregas</a></li>
+      <li><a href="camioes.html"><i data-lucide="truck" style="width:18px;height:18px"></i> Camiões</a></li>
+      <li><a href="utilizadores.html" class="active"><i data-lucide="users" style="width:18px;height:18px"></i>
+          Utilizadores</a></li>
+      <li><a href="config.html"><i data-lucide="settings" style="width:18px;height:18px"></i> Configurações</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <button id="logout"><i data-lucide="log-out" style="width:18px;height:18px;margin-right:8px"></i>Terminar
+        Sessão</button>
+    </div>
+  </nav>
+
+  <div class="main">
+    <header>
+      <h1><i data-lucide="users" style="width:28px;height:28px;color:#2563eb"></i> Gestão de Utilizadores</h1>
+      <button class="btn-add" onclick="showCreateUserModal()">
+        <i data-lucide="user-plus" style="width:20px;height:20px"></i> Novo Utilizador
+      </button>
+    </header>
+
+    <div class="users-grid" id="usersGrid">
+      <!-- Os cards dos utilizadores serão inseridos aqui -->
+    </div>
+  </div>
+
+  <!-- Modal Novo Utilizador -->
+  <div id="createUserModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Registar Utilizador</h2>
+        <span class="close" onclick="hideCreateUserModal()">&times;</span>
+      </div>
+      <div class="form-group">
+        <label>Nome:</label>
+        <input type="text" id="newUserName" placeholder="Digite o nome completo">
+      </div>
+      <div class="form-group">
+        <label>Password:</label>
+        <input type="password" id="newUserPassword" placeholder="Defina uma senha">
+      </div>
+      <div class="form-group">
+        <label>Cargo:</label>
+        <select id="newUserRole">
+          <option value="supervisor">Supervisor</option>
+          <option value="trabalhador">Trabalhador</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-save" onclick="createUser()">Guardar Utilizador</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Utilizador -->
+  <div id="editUserModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Editar Utilizador</h2>
+        <span class="close" onclick="hideEditUserModal()">&times;</span>
+      </div>
+      <div class="form-group">
+        <label>Nome:</label>
+        <input type="text" id="editUserName">
+      </div>
+      <div class="form-group">
+        <label>Nova Password (opcional):</label>
+        <input type="password" id="editUserPassword">
+      </div>
+      <div class="form-group">
+        <label>Cargo:</label>
+        <select id="editUserRole">
+          <option value="supervisor">Supervisor</option>
+          <option value="trabalhador">Trabalhador</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-save" onclick="updateUser()">Atualizar</button>
+        <button class="btn-delete" onclick="deleteUser()">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    const apiUrl = window.location.origin;
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+
+    if (!currentUser) {
+      window.location.href = 'index.html';
+    }
+
+    if (currentUser.role !== 'fundador') {
+      window.location.href = 'dashboard.html';
+    }
+
+    let selectedUserId = null;
+
+    async function loadUsers() {
+      try {
+        const res = await fetch(`${apiUrl}/users?company=${currentUser.company}`);
+        const users = await res.json();
+        const usersGrid = document.getElementById('usersGrid');
+        usersGrid.innerHTML = '';
+
+        users.forEach(user => {
+          const card = document.createElement('div');
+          card.className = 'user-card';
+          card.innerHTML = `
+                        <div class="user-header">
+                            <span class="user-name">${user.name}</span>
+                            <span class="user-role role-${user.role}">${formatRole(user.role)}</span>
+                        </div>
+                        <div class="user-info">
+                            <i data-lucide="calendar" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"></i>
+                            Criado em: ${new Date(user.created_at).toLocaleDateString('pt-PT')}
+                        </div>
+                        <div class="user-actions">
+                            <button class="action-btn" onclick="showEditUserModal('${user.id}', '${user.name}', '${user.role}')">
+                                <i data-lucide="edit-2" style="width:14px;height:14px"></i> Editar
+                            </button>
+                        </div>
+                    `;
+          usersGrid.appendChild(card);
+        });
+        lucide.createIcons();
+      } catch (err) {
+        console.error('Erro ao carregar utilizadores:', err);
+      }
+    }
+
+    function formatRole(role) {
+      const roleMap = {
+        'fundador': 'Fundador',
+        'supervisor': 'Supervisor',
+        'trabalhador': 'Trabalhador'
+      };
+      return roleMap[role] || role;
+    }
+
+    function showCreateUserModal() {
+      document.getElementById('createUserModal').style.display = 'flex';
+    }
+
+    function hideCreateUserModal() {
+      document.getElementById('createUserModal').style.display = 'none';
+      document.getElementById('newUserName').value = '';
+      document.getElementById('newUserPassword').value = '';
+    }
+
+    function showEditUserModal(userId, userName, userRole) {
+      selectedUserId = userId;
+      document.getElementById('editUserName').value = userName;
+      document.getElementById('editUserRole').value = userRole;
+      document.getElementById('editUserPassword').value = '';
+      document.getElementById('editUserModal').style.display = 'flex';
+    }
+
+    function hideEditUserModal() {
+      document.getElementById('editUserModal').style.display = 'none';
+      selectedUserId = null;
+    }
+
+    async function createUser() {
+      const name = document.getElementById('newUserName').value;
+      const password = document.getElementById('newUserPassword').value;
+      const role = document.getElementById('newUserRole').value;
+
+      if (!name || !password) {
+        Swal.fire('Erro', 'Preencha todos os campos obrigatórios', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${apiUrl}/create-user`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            password,
+            role,
+            createdBy: currentUser.id
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          Swal.fire('Sucesso', 'Utilizador criado com sucesso!', 'success');
+          hideCreateUserModal();
+          loadUsers();
+        } else {
+          Swal.fire('Erro', data.message || 'Falha ao criar utilizador', 'error');
+        }
+      } catch (err) {
+        Swal.fire('Erro', 'Erro de conexão: ' + err.message, 'error');
+      }
+    }
+
+    async function updateUser() {
+      const name = document.getElementById('editUserName').value;
+      const password = document.getElementById('editUserPassword').value;
+      const role = document.getElementById('editUserRole').value;
+
+      if (!name) {
+        Swal.fire('Erro', 'Nome é obrigatório', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${apiUrl}/update-user/${selectedUserId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            password: password || undefined,
+            role,
+            updatedBy: currentUser.id
+          })
+        });
+
+        if (res.ok) {
+          Swal.fire('Sucesso', 'Utilizador atualizado com sucesso!', 'success');
+          hideEditUserModal();
+          loadUsers();
+        } else {
+          const data = await res.json();
+          Swal.fire('Erro', data.message || 'Falha ao atualizar', 'error');
+        }
+      } catch (err) {
+        Swal.fire('Erro', 'Erro de conexão: ' + err.message, 'error');
+      }
+    }
+
+    async function deleteUser() {
+      const result = await Swal.fire({
+        title: 'Tem a certeza?',
+        text: "Esta ação não pode ser revertida!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sim, excluir!',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (result.isConfirmed) {
+        try {
+          const res = await fetch(`${apiUrl}/delete-user/${selectedUserId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deletedBy: currentUser.id })
+          });
+
+          if (res.ok) {
+            Swal.fire('Excluído!', 'Utilizador removido com sucesso.', 'success');
+            hideEditUserModal();
+            loadUsers();
+          } else {
+            const data = await res.json();
+            Swal.fire('Erro', data.message || 'Falha ao excluir', 'error');
+          }
+        } catch (err) {
+          Swal.fire('Erro', 'Erro de conexão: ' + err.message, 'error');
+        }
+      }
+    }
+
+    document.getElementById('logout').addEventListener('click', () => {
+      localStorage.removeItem('user');
+      window.location.href = 'index.html';
+    });
+
+    loadUsers();
+    lucide.createIcons();
+  </script>
+</body>
+
+</html>

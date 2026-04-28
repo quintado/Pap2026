@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CamiGest - Painel</title>
+  <link rel="icon" href="favicon.ico">
+  <style>
+    body {
+      background: #f4f6fb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+      color: #004aad;
+    }
+
+    .loading-box {
+      text-align: center;
+      background: white;
+      padding: 40px 60px;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .spinner {
+      border: 4px solid #e3e3e3;
+      border-top: 4px solid #004aad;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      margin: 20px auto;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="loading-box">
+    <h1>A carregar o painel...</h1>
+    <div class="spinner"></div>
+    <p>Por favor aguarde...</p>
+  </div>
+
+  <script>
+    // Simula um pequeno carregamento
+    setTimeout(() => {
+      const user = JSON.parse(localStorage.getItem("user"));
+
+      // Se não estiver autenticado, volta ao login
+      if (!user || !user.name) {
+        window.location.href = "index.html";
+      }
+      else {
+        // Se estiver autenticado, vai para o dashboard principal
+        window.location.href = "dashboard.html";
+      }
+    }, 1200); // tempo de transição para suavizar (1.2s)
+  </script>
+</body>
+
+</html>

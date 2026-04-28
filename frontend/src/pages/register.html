@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CamiGest - Criar Conta</title>
+  <link rel="stylesheet" href="css/modern-design.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      position: relative;
+    }
+
+    /* Partículas flutuantes */
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(240, 147, 251, 0.3), rgba(245, 87, 108, 0.3));
+      animation: float 15s infinite ease-in-out;
+      pointer-events: none;
+    }
+
+    .particle:nth-child(1) {
+      width: 70px;
+      height: 70px;
+      top: 15%;
+      left: 15%;
+      animation-delay: 0s;
+    }
+
+    .particle:nth-child(2) {
+      width: 90px;
+      height: 90px;
+      top: 70%;
+      left: 75%;
+      animation-delay: 3s;
+    }
+
+    .particle:nth-child(3) {
+      width: 60px;
+      height: 60px;
+      top: 40%;
+      left: 80%;
+      animation-delay: 6s;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 0.3;
+      }
+
+      50% {
+        transform: translateY(-40px) rotate(180deg);
+        opacity: 0.7;
+      }
+    }
+
+    .register-container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 480px;
+      animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .register-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 24px;
+      padding: 40px 35px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .logo h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 38px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+      letter-spacing: -1px;
+    }
+
+    .logo p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-wrapper input {
+      width: 100%;
+      padding: 13px 16px 13px 44px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .input-wrapper input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .input-wrapper input:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.12);
+      border-color: #f093fb;
+      box-shadow: 0 0 0 4px rgba(240, 147, 251, 0.15);
+    }
+
+    .input-wrapper input[readonly] {
+      background: rgba(255, 255, 255, 0.05);
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;
+      pointer-events: none;
+    }
+
+    .password-strength {
+      margin-top: 8px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .password-strength-bar {
+      height: 100%;
+      width: 0;
+      transition: all 0.3s;
+      border-radius: 2px;
+    }
+
+    .btn-register {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-register::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .btn-register:hover::before {
+      width: 400px;
+      height: 400px;
+    }
+
+    .btn-register:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(245, 87, 108, 0.5);
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 24px 0;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .divider span {
+      padding: 0 16px;
+    }
+
+    .btn-back {
+      width: 100%;
+      padding: 13px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-back:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: #667eea;
+      transform: translateY(-2px);
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 24px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    /* Loading State */
+    .btn-register.loading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .btn-register.loading::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    @keyframes spin {
+      to {
+        transform: translate(-50%, -50%) rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+
+  <div class="register-container">
+    <div class="register-card">
+      <div class="logo">
+        <h1><i data-lucide="sparkles"
+            style="width: 32px; height: 32px; vertical-align: middle; margin-right: 8px;"></i>Criar Conta</h1>
+        <p>Junte-se ao CamiGest</p>
+      </div>
+
+      <form id="registerForm">
+        <div class="form-group">
+          <label for="nome">Nome Completo</label>
+          <div class="input-wrapper">
+            <span class="input-icon"><i data-lucide="user" style="width: 18px; height: 18px;"></i></span>
+            <input type="text" id="nome" name="nome" placeholder="Digite seu nome completo" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="company">Nome da Empresa</label>
+          <div class="input-wrapper">
+            <span class="input-icon"><i data-lucide="building-2" style="width: 18px; height: 18px;"></i></span>
+            <input type="text" id="company" name="company" placeholder="Nome da sua empresa" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Palavra-passe</label>
+          <div class="input-wrapper">
+            <span class="input-icon"><i data-lucide="lock" style="width: 18px; height: 18px;"></i></span>
+            <input type="password" id="password" name="password" placeholder="Crie uma palavra-passe" required>
+          </div>
+          <div class="password-strength" id="passwordStrength">
+            <div class="password-strength-bar" id="strengthBar"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirm_password">Confirmar Palavra-passe</label>
+          <div class="input-wrapper">
+            <span class="input-icon"><i data-lucide="shield-check" style="width: 18px; height: 18px;"></i></span>
+            <input type="password" id="confirm_password" name="confirm_password"
+              placeholder="Confirme sua palavra-passe" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="cargo">Cargo</label>
+          <div class="input-wrapper">
+            <span class="input-icon"><i data-lucide="crown" style="width: 18px; height: 18px;"></i></span>
+            <input type="text" id="cargo" name="cargo" value="fundador" readonly>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-register">
+          Criar Conta
+        </button>
+      </form>
+
+      <div class="divider">
+        <span>JÁ TEM CONTA?</span>
+      </div>
+
+      <button type="button" class="btn-back" onclick="window.location.href='index.html'">
+        <i data-lucide="arrow-left" style="width: 16px; height: 16px; margin-right: 4px; vertical-align: middle;"></i>
+        Voltar ao Login
+      </button>
+
+      <div class="footer">
+        © 2025 CamiGest. Todos os direitos reservados.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("registerForm");
+    const btnRegister = document.querySelector(".btn-register");
+    const passwordInput = document.getElementById("password");
+    const strengthIndicator = document.getElementById("passwordStrength");
+    const strengthBar = document.getElementById("strengthBar");
+
+    passwordInput.addEventListener("input", function () {
+      const password = this.value;
+      strengthIndicator.style.display = password ? "block" : "none";
+
+      let strength = 0;
+      if (password.length >= 6) strength += 25;
+      if (password.length >= 8) strength += 25;
+      if (/[A-Z]/.test(password)) strength += 25;
+      if (/[0-9]/.test(password)) strength += 25;
+
+      strengthBar.style.width = strength + "%";
+
+      if (strength < 50) {
+        strengthBar.style.background = "linear-gradient(90deg, #ef4444, #dc2626)";
+      } else if (strength < 75) {
+        strengthBar.style.background = "linear-gradient(90deg, #f59e0b, #d97706)";
+      } else {
+        strengthBar.style.background = "linear-gradient(90deg, #10b981, #059669)";
+      }
+    });
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const nome = this.nome.value.trim();
+      const company = this.company.value.trim();
+      const password = this.password.value.trim();
+      const confirmPassword = this.confirm_password.value.trim();
+      const cargo = this.cargo.value.trim();
+
+      if (!nome || !password || !confirmPassword || !cargo || !company) {
+        alert("Preencha todos os campos.");
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        alert("As palavras-passe não coincidem.");
+        return;
+      }
+
+      btnRegister.classList.add("loading");
+      btnRegister.textContent = "";
+
+      try {
+        const apiUrl = window.location.origin;
+        const res = await fetch(`${apiUrl}/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: nome,
+            password: password,
+            role: cargo,
+            company: company
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Erro ao criar conta.");
+          btnRegister.classList.remove("loading");
+          btnRegister.textContent = "Criar Conta";
+          return;
+        }
+
+        btnRegister.textContent = "✓ Conta criada!";
+        btnRegister.style.background = "linear-gradient(135deg, #10b981, #059669)";
+
+        setTimeout(() => {
+          alert("Conta criada com sucesso!");
+          window.location.href = "index.html";
+        }, 1000);
+
+      } catch (err) {
+        alert("Erro ao contactar o servidor.");
+        btnRegister.classList.remove("loading");
+        btnRegister.textContent = "Criar Conta";
+      }
+    });
+
+    lucide.createIcons();
+  </script>
+</body>
+
+</html>

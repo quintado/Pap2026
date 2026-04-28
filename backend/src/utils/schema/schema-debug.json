@@ -1,0 +1,31 @@
+{
+  "deliveries": {
+    "columns": [
+      "id",
+      "company",
+      "truck_id",
+      "created_at",
+      "tipo",
+      "origem",
+      "destino",
+      "estado",
+      "data_prevista",
+      "observacoes",
+      "created_by",
+      "updated_at"
+    ]
+  },
+  "users": {
+    "columns": [
+      "id",
+      "name",
+      "password",
+      "company",
+      "created_at",
+      "role",
+      "created_by",
+      "updated_by",
+      "updated_at"
+    ]
+  }
+}

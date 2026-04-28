@@ -1,0 +1,12 @@
+{
+  "name": "camigest-frontend",
+  "version": "1.0.0",
+  "description": "Frontend do sistema CamiGest",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve ."
+  },
+  "keywords": ["frontend", "html", "css"],
+  "author": "",
+  "license": "ISC"
+}

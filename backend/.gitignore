@@ -1,0 +1,32 @@
+# Variáveis de ambiente (CRÍTICO - NÃO COMMITAR)
+.env
+
+# Dependências
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build
+dist/
+build/
+
+# Temporários
+*.tmp
+*.temp
+.cache/

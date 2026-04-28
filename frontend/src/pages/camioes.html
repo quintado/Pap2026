@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CamiGest - Camiões</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/modern-design.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      display: flex;
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .sidebar {
+      width: 260px;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      position: fixed;
+      height: 100vh;
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar-logo h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #667eea, #f093fb);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0;
+    }
+
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      flex: 1;
+    }
+
+    .sidebar ul li {
+      margin-bottom: 8px;
+    }
+
+    .sidebar ul li a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-radius: 12px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      font-weight: 500;
+      font-size: 15px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sidebar ul li a::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 3px;
+      background: linear-gradient(180deg, #667eea, #764ba2);
+      transform: scaleY(0);
+      transition: transform 0.3s;
+    }
+
+    .sidebar ul li a:hover,
+    .sidebar ul li a.active {
+      background: rgba(102, 126, 234, 0.15);
+      color: var(--text-primary);
+      transform: translateX(4px);
+    }
+
+    .sidebar ul li a.active::before {
+      transform: scaleY(1);
+    }
+
+    .sidebar-footer {
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    #logout {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    #logout:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+    }
+
+    .main {
+      flex: 1;
+      margin-left: 260px;
+      padding: 32px;
+      animation: fadeInUp 0.6s ease-out;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 32px;
+      font-family: 'Outfit', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .table-container {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      animation: fadeInUp 0.8s ease-out 0.2s backwards;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 14px 12px;
+    }
+
+    th {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(102, 126, 234, 0.2));
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      color: var(--text-secondary);
+      font-size: 15px;
+    }
+
+    tr:nth-child(even) {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    tr:hover {
+      background-color: rgba(102, 126, 234, 0.1);
+      transition: background-color 0.3s;
+    }
+
+    .badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-success {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-progress {
+      background: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .badge-danger {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .badge-pending {
+      background: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+      background: #1e293b;
+      margin: 10% auto;
+      padding: 32px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 500px;
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      animation: modalFadeIn 0.3s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 16px;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .close {
+      color: #94a3b8;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+
+    .close:hover {
+      color: #fff;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #94a3b8;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+    }
+
+    .form-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .sidebar {
+        width: 220px;
+      }
+
+      .main {
+        margin-left: 220px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .main {
+        margin-left: 0;
+        padding: 20px;
+      }
+
+      .modal-content {
+        width: 90%;
+        margin: 20% auto;
+        padding: 24px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <h2><i data-lucide="truck"
+          style="display: inline-block; width: 26px; height: 26px; vertical-align: middle; margin-right: 6px;"></i>CamiGest
+      </h2>
+    </div>
+    <ul>
+      <li><a href="dashboard.html"><i data-lucide="layout-dashboard" style="width: 18px; height: 18px;"></i>
+          Dashboard</a></li>
+      <li><a href="entregas.html"><i data-lucide="package" style="width: 18px; height: 18px;"></i> Entregas</a></li>
+      <li><a class="active" href="camioes.html"><i data-lucide="truck" style="width: 18px; height: 18px;"></i>
+          Camiões</a></li>
+      <li><a href="config.html"><i data-lucide="settings" style="width: 18px; height: 18px;"></i> Configurações</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <button id="logout"><i data-lucide="log-out" style="width: 18px; height: 18px; margin-right: 8px;"></i>Terminar
+        Sessão</button>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="header-section"
+      style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+      <h1><i data-lucide="truck" style="width: 28px; height: 28px;"></i> Camiões</h1>
+      <button id="btn-add-truck" class="btn-primary" style="display: none; align-items: center; gap: 8px;">
+        <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i> Adicionar Camião
+      </button>
+    </div>
+
+    <div class="table-container">
+      <table id="trucks-table">
+        <thead>
+          <tr>
+            <th>Matrícula</th>
+            <th>Modelo</th>
+            <th>Estado</th>
+            <th>Quilometragem</th>
+            <th>Motorista Atual</th>
+            <th>Entrega Atual</th>
+          </tr>
+        </thead>
+        <tbody id="trucks-body">
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 40px;">Carregando frota...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="modal-truck" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2><i data-lucide="plus-circle"></i> Registar Camião</h2>
+        <span class="close">&times;</span>
+      </div>
+      <form id="form-truck">
+        <div class="form-group">
+          <label for="plate">Matrícula (XX-XX-XX)</label>
+          <input type="text" id="plate" placeholder="Ex: 00-AA-00" required>
+        </div>
+        <div class="form-group">
+          <label for="model">Modelo</label>
+          <input type="text" id="model" placeholder="Ex: Volvo FH16" required>
+        </div>
+        <div class="form-group">
+          <label for="mileage">Quilometragem Inicial (km)</label>
+          <input type="number" id="mileage" placeholder="Ex: 150000" required min="0">
+        </div>
+        <div class="form-footer">
+          <button type="button" class="btn-secondary close-modal">Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar Camião</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modal-maintenance" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🔧 Manutenção Necessária</h2>
+        <span class="close" onclick="closeMaintenance()">&times;</span>
+      </div>
+      <div style="padding: 20px; text-align: center;">
+        <p style="color: #f59e0b; font-size: 16px; margin-bottom: 12px;">
+          ⚠️ Este camião atingiu o limite de quilometragem e necessita de manutenção.
+        </p>
+        <p style="color: var(--text-secondary); margin-bottom: 24px;">
+          Deseja realizar a manutenção agora? Se sim, o camião ficará disponível novamente.
+          Se não, o camião permanecerá em manutenção e não poderá ser utilizado.
+        </p>
+      </div>
+      <div class="form-footer">
+        <button type="button" class="btn-secondary" onclick="declineMaintenance()">❌ Não, depois</button>
+        <button type="button" class="btn-primary" onclick="confirmMaintenance()">✅ Sim, realizar manutenção</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) {
+      window.location.href = "index.html";
+    } else {
+      const userRole = (user.role || "").toLowerCase();
+      if (userRole === 'fundador' || userRole === 'supervisor') {
+        const addBtn = document.getElementById('btn-add-truck');
+        if (addBtn) addBtn.style.display = 'flex';
+      }
+    }
+
+    document.getElementById("logout").addEventListener("click", () => {
+      localStorage.removeItem("user");
+      window.location.href = "index.html";
+    });
+
+    const apiUrl = window.location.origin;
+    async function loadTrucks() {
+      try {
+        const res = await fetch(`${apiUrl}/trucks?company=${encodeURIComponent(user.company)}`);
+        const trucks = await res.json();
+
+        const tbody = document.getElementById('trucks-body');
+        tbody.innerHTML = '';
+
+        if (!trucks || !Array.isArray(trucks) || trucks.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;">Nenhum camião registado na frota.</td></tr>';
+          return;
+        }
+
+        // Buscar utilizadores e entregas em paralelo
+        const usersRes = await fetch(`${apiUrl}/users?company=${encodeURIComponent(user.company)}`);
+        const users = await usersRes.json();
+        
+        const deliveriesRes = await fetch(`${apiUrl}/deliveries?company=${encodeURIComponent(user.company)}`);
+        const deliveries = await deliveriesRes.json();
+        
+        // Mapear utilizadores por ID
+        const userMap = {};
+        if (Array.isArray(users)) {
+          users.forEach(u => {
+            userMap[u.id] = u.name;
+          });
+        }
+        
+        // Mapear entregas por truck_id
+        const deliveryMap = {};
+        if (Array.isArray(deliveries)) {
+          deliveries.forEach(del => {
+            if (del.truck_id && del.estado === 'em-curso') {
+              if (!deliveryMap[del.truck_id]) {
+                deliveryMap[del.truck_id] = [];
+              }
+              deliveryMap[del.truck_id].push(del);
+            }
+          });
+        }
+
+        trucks.forEach(truck => {
+          const tr = document.createElement('tr');
+          
+          let driverName = '<span style="opacity: 0.6">Nenhum</span>';
+          if (truck.assigned_to && userMap[truck.assigned_to]) {
+            driverName = userMap[truck.assigned_to];
+          }
+
+          let statusClass = 'badge-pending';
+          let statusText = truck.status || 'Ativo';
+          let clickableStatus = false;
+
+          // Verificar se necessita manutenção: km desde manutenção >= 20000 OU status é 'manutencao'
+          const mileageSinceMaintenance = truck.mileage_since_maintenance || 0;
+          const needsMaintenance = mileageSinceMaintenance >= 20000 || truck.status === 'manutencao';
+
+          if (needsMaintenance) {
+            statusClass = 'badge-danger';
+            statusText = 'Manutenção';
+            clickableStatus = true;
+          } else if (truck.status === 'disponivel') {
+            statusClass = 'badge-success';
+            statusText = 'Disponível';
+          } else if (truck.status === 'em_uso' || truck.status === 'em-curso') {
+            statusClass = 'badge-progress';
+            statusText = 'Em uso';
+          }
+
+          let statusCell = `<span class="badge ${statusClass}">${statusText}</span>`;
+          if (clickableStatus) {
+            statusCell = `<span class="badge ${statusClass}" style="cursor: pointer; text-decoration: underline; text-underline-offset: 3px;" title="Clique para gerir manutenção" onclick="openMaintenanceModal(${truck.id})">${statusText}</span>`;
+          }
+
+          let deliveryInfo = '<span style="opacity: 0.6">Nenhum</span>';
+          const truckDeliveries = deliveryMap[truck.id];
+          if (truckDeliveries && truckDeliveries.length > 0 && !needsMaintenance) {
+            const del = truckDeliveries[0];
+            deliveryInfo = `
+              <div style="margin-bottom: 8px; font-size: 14px; color: #94a3b8;">
+                ${del.tipo}: ${del.origem} → ${del.destino}<br>
+                <small>Prevista: ${new Date(del.data_prevista).toLocaleDateString('pt-PT')}</small>
+              </div>
+              <button onclick="window.location.href='entregas.html'" class="btn-secondary" style="font-size: 12px; padding: 4px 8px;">Ver Entregas</button>
+            `;
+          }
+
+          tr.innerHTML = `
+            <td style="font-weight: 700; color: #fff;">${truck.plate}</td>
+            <td>${truck.model || 'N/A'}</td>
+            <td>${statusCell}</td>
+            <td>${Number(truck.mileage).toLocaleString()} km</td>
+            <td>${driverName}</td>
+            <td>${deliveryInfo}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error('Erro ao carregar camiões:', err);
+        Swal.fire('Erro', 'Não foi possível carregar a frota: ' + err.message, 'error');
+      }
+    }
+
+    const modal = document.getElementById("modal-truck");
+    const btnAdd = document.getElementById("btn-add-truck");
+    const spanClose = document.querySelector(".close");
+    const btnCancel = document.querySelector(".close-modal");
+
+    if (btnAdd) btnAdd.onclick = () => modal.style.display = "block";
+    if (spanClose) spanClose.onclick = () => modal.style.display = "none";
+    if (btnCancel) btnCancel.onclick = () => modal.style.display = "none";
+
+    window.onclick = (event) => {
+      if (event.target == modal) modal.style.display = "none";
+    };
+
+    document.getElementById('form-truck').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const truckData = {
+        plate: document.getElementById('plate').value,
+        model: document.getElementById('model').value,
+        mileage: document.getElementById('mileage').value,
+        createdBy: user.id
+      };
+
+      try {
+        const response = await fetch('/create-truck', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(truckData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          Swal.fire({
+            title: 'Sucesso!',
+            text: result.message,
+            icon: 'success',
+            background: '#1e293b',
+            color: '#fff',
+            confirmButtonColor: '#667eea'
+          });
+          modal.style.display = "none";
+          document.getElementById('form-truck').reset();
+          loadTrucks();
+        } else {
+          Swal.fire({
+            title: 'Erro',
+            text: result.message || 'Erro ao adicionar camião',
+            icon: 'error',
+            background: '#1e293b',
+            color: '#fff'
+          });
+        }
+      } catch (err) {
+        Swal.fire('Erro', 'Erro de conexão com o servidor', 'error');
+      }
+    });
+
+    loadTrucks();
+    lucide.createIcons();
+
+    // Variável global para rastrear o camião em manutenção
+    let currentTruckForMaintenance = null;
+
+    // Função para abrir modal de manutenção
+    window.openMaintenanceModal = function(truckId) {
+      currentTruckForMaintenance = truckId;
+      const modal = document.getElementById('modal-maintenance');
+      if (modal) {
+        modal.style.display = 'block';
+      }
+    };
+
+    // Função para fechar modal de manutenção
+    window.closeMaintenance = function() {
+      const modal = document.getElementById('modal-maintenance');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+      currentTruckForMaintenance = null;
+    };
+
+    // Função para confirmar manutenção concluída (Sim → fica disponível)
+    window.confirmMaintenance = async function() {
+      if (!currentTruckForMaintenance) {
+        Swal.fire('Erro', 'Nenhum camião selecionado', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/complete-maintenance`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ truckId: currentTruckForMaintenance })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Erro ao completar manutenção');
+        }
+
+        Swal.fire({
+          title: '✅ Manutenção Realizada!',
+          text: 'O camião está agora disponível.',
+          icon: 'success',
+          background: '#1e293b',
+          color: '#fff',
+          confirmButtonColor: '#667eea'
+        });
+
+        closeMaintenance();
+        loadTrucks();
+      } catch (err) {
+        console.error('[MAINTENANCE CONFIRM ERROR]:', err);
+        Swal.fire('Erro', 'Erro ao completar manutenção: ' + err.message, 'error');
+      }
+    };
+
+    // Função para recusar manutenção (Não → fica em manutenção e bloqueado)
+    window.declineMaintenance = async function() {
+      if (!currentTruckForMaintenance) {
+        closeMaintenance();
+        return;
+      }
+
+      try {
+        // Marcar o camião com status 'manutencao' na BD para bloquear uso
+        const response = await fetch(`/set-maintenance`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ truckId: currentTruckForMaintenance })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Erro ao marcar manutenção');
+        }
+
+        Swal.fire({
+          title: '🔧 Em Manutenção',
+          text: 'O camião ficou marcado como em manutenção e não poderá ser utilizado.',
+          icon: 'warning',
+          background: '#1e293b',
+          color: '#fff',
+          confirmButtonColor: '#667eea'
+        });
+
+        closeMaintenance();
+        loadTrucks();
+      } catch (err) {
+        console.error('[MAINTENANCE DECLINE ERROR]:', err);
+        // Mesmo com erro, fechar modal e recarregar
+        closeMaintenance();
+        loadTrucks();
+      }
+    };
+
+    // Fechar modal ao clicar fora
+    window.addEventListener('click', (event) => {
+      const modal = document.getElementById('modal-maintenance');
+      if (modal && event.target === modal) {
+        closeMaintenance();
+      }
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,35 @@
+--- DELIVERIES COLUMNS ---
+id
+company
+truck_id
+created_at
+tipo
+origem
+destino
+estado
+data_prevista
+observacoes
+created_by
+updated_at
+
+--- TRUCKS COLUMNS ---
+id
+plate
+model
+status
+mileage
+company
+assigned_to
+created_at
+updated_at
+updated_by
+
+--- DELIVERY_REQUESTS COLUMNS ---
+id
+delivery_id
+truck_id
+worker_id
+status
+created_at
+updated_at
+
