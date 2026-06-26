@@ -92,8 +92,8 @@ npm start
 
 | Tecnologia | Função             |
 | ---------- | ------------------ |
-| HTML5      | Estrutura          |
-| CSS3       | Estilização        |
+| HTML       | Estrutura          |
+| CSS        | Estilização        |
 | JavaScript | Lógica do Frontend |
 | Node.js    | Backend            |
 | Express.js | API                |
