@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/modern-design.css">
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="/public/js/custom-select.js"></script>
   <style>
     body {
       display: flex;
@@ -375,6 +376,32 @@
       transition: all 0.3s;
     }
 
+    /* Ensure select control and its options use dark background and visible text */
+    .filter-group input {
+      position: relative;
+      z-index: 1;
+    }
+
+    .filter-group select {
+      width: 100%;
+      padding: 10px;
+      background-color: #0f172a !important;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      font-size: 14px;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+      transition: all 0.3s;
+      position: relative;
+      z-index: 2000;
+    }
+
+    /* Force option styles (may be ignored by some native UAs) */
+    .filter-group select option {
+      background-color: #1e293b !important;
+      color: #ffffff !important;
+    }
+
     .filter-group input:focus,
     .filter-group select:focus {
       outline: none;
@@ -695,10 +722,198 @@
         gap: 16px;
       }
     }
+
+    /* Custom select component styles */
+    .custom-select-wrapper {
+      position: relative;
+      width: 100%;
+    }
+
+    .custom-select-selected {
+      background: #0f172a;
+      color: #fff;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .custom-select-options {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 6px);
+      background: #1e293b;
+      border-radius: 8px;
+      max-height: 240px;
+      overflow: auto;
+      box-shadow: 0 10px 30px rgba(2, 6, 23, 0.6);
+      z-index: 3000;
+      display: none;
+      padding: 6px 0;
+    }
+
+    .custom-select-options.open {
+      display: block;
+    }
+
+    .custom-select-option {
+      padding: 10px 14px;
+      color: #fff;
+      list-style: none;
+      cursor: pointer;
+    }
+
+    .custom-select-option:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .custom-select-option.selected {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .feedback-modal-bg {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 11000;
+      padding: 24px;
+      opacity: 0;
+      transition: opacity 0.24s ease;
+    }
+
+    .feedback-modal-bg.show {
+      display: flex;
+      opacity: 1;
+    }
+
+    .feedback-modal-content {
+      width: min(480px, 100%);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98));
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+      padding: 32px 30px;
+      text-align: center;
+      transform: translateY(-20px) scale(0.98);
+      opacity: 0;
+      transition: transform 0.24s ease, opacity 0.24s ease;
+    }
+
+    .feedback-modal-bg.show .feedback-modal-content {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    .feedback-modal-icon {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
+      font-size: 28px;
+    }
+
+    .feedback-modal-title {
+      margin: 0 0 12px;
+      font-size: 26px;
+      color: #f8fafc;
+      font-weight: 800;
+    }
+
+    .feedback-modal-text {
+      margin: 0 0 28px;
+      color: rgba(248, 250, 252, 0.8);
+      font-size: 15px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .feedback-modal-button {
+      background: linear-gradient(135deg, #6366f1, #818cf8);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 24px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .feedback-modal-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 28px rgba(99, 102, 241, 0.25);
+    }
+
+    .swal2-popup {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98)) !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    .swal2-title {
+      color: #f8fafc !important;
+      font-weight: 800 !important;
+      font-size: 26px !important;
+    }
+
+    .swal2-html-container {
+      color: rgba(248, 250, 252, 0.8) !important;
+    }
+
+    .swal2-html-container p {
+      margin: 0 !important;
+    }
+
+    .swal2-confirm,
+    .swal2-cancel {
+      font-weight: 700 !important;
+      border-radius: 14px !important;
+      padding: 14px 24px !important;
+    }
+
+    .swal2-icon {
+      border-color: rgba(255, 165, 0, 0.3) !important;
+      color: #ffa500 !important;
+    }
+
+    .swal2-icon.swal2-warning {
+      background-color: rgba(255, 165, 0, 0.08) !important;
+    }
+
+    .swal2-icon.swal2-error {
+      background-color: rgba(239, 68, 68, 0.08) !important;
+      border-color: rgba(239, 68, 68, 0.3) !important;
+      color: #f87171 !important;
+    }
+
+    .swal2-icon.swal2-success {
+      background-color: rgba(34, 197, 94, 0.08) !important;
+      border-color: rgba(34, 197, 94, 0.3) !important;
+      color: #22c55e !important;
+    }
   </style>
 </head>
 
 <body>
+
+  <div id="feedbackModalBg" class="feedback-modal-bg"
+    onclick="if(event.target.id==='feedbackModalBg') closeFeedbackModal()">
+    <div class="feedback-modal-content">
+      <div class="feedback-modal-icon" id="feedbackModalIcon"><i data-lucide="check" style="width:28px;height:28px;"></i></div>
+      <h2 class="feedback-modal-title" id="feedbackModalTitle">Sucesso!</h2>
+      <p class="feedback-modal-text" id="feedbackModalMessage">Entrega criada com sucesso!</p>
+      <button class="feedback-modal-button" onclick="closeFeedbackModal()">OK</button>
+    </div>
+  </div>
 
   <nav class="sidebar">
     <div class="sidebar-logo">
@@ -712,6 +927,7 @@
       <li><a class="active" href="entregas.html"><i data-lucide="package" style="width: 18px; height: 18px;"></i>
           Entregas</a></li>
       <li><a href="camioes.html"><i data-lucide="truck" style="width: 18px; height: 18px;"></i> Camiões</a></li>
+      <li><a href="calendario.html"><i data-lucide="calendar" style="width: 18px; height: 18px;"></i> Calendário</a></li>
       <li><a href="config.html"><i data-lucide="settings" style="width: 18px; height: 18px;"></i> Configurações</a></li>
     </ul>
     <div class="sidebar-footer">
@@ -745,14 +961,23 @@
 
     <div class="filters-section">
       <div class="filter-group">
-        <label><i data-lucide="search"
-            style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i> Pesquisar</label>
-        <input type="text" id="searchInput" placeholder="Origem ou destino...">
+        <label><i data-lucide="map-pin"
+            style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i> Origem</label>
+        <input type="text" id="searchOrigem" placeholder="Ex: Lisboa...">
+      </div>
+      <div class="filter-group">
+        <label><i data-lucide="navigation"
+            style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i> Destino</label>
+        <input type="text" id="searchDestino" placeholder="Ex: Porto...">
+      </div>
+      <div class="filter-group">
+        <label><i data-lucide="user"
+            style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i> Trabalhador</label>
+        <input type="text" id="searchWorker" placeholder="Nome do camionista...">
       </div>
       <div class="filter-group">
         <label><i data-lucide="filter"
-            style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i> Filtrar por
-          Estado</label>
+            style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i> Estado</label>
         <select id="statusFilter">
           <option value="">Todos</option>
           <option value="pendente">Pendente</option>
@@ -771,8 +996,9 @@
             <th>Origem</th>
             <th>Destino</th>
             <th>Estado</th>
+            <th>Data Saída</th>
             <th>Data Prevista</th>
-            <th id="actionsHeader">Trabalhador</th>
+            <th id="actionsHeader">Camionista</th>
           </tr>
         </thead>
         <tbody id="deliveriesTableBody">
@@ -819,6 +1045,11 @@
             <option value="concluido">Concluído</option>
             <option value="cancelado">Cancelado</option>
           </select>
+        </div>
+
+        <div class="form-group">
+          <label>Data de Saída</label>
+          <input type="date" id="dataSaida">
         </div>
 
         <div class="form-group">
@@ -899,8 +1130,8 @@
     const user = JSON.parse(localStorage.getItem("user"));
     if (!user) window.location.href = "index.html";
 
-    const isManager = user.role?.toLowerCase() === "fundador" || user.role?.toLowerCase() === "supervisor";
-    const isWorker = user.role?.toLowerCase() === "trabalhador";
+    const isManager = user.role?.toLowerCase() === "ceo" || user.role?.toLowerCase() === "supervisor";
+    const isWorker = user.role?.toLowerCase() === "camionista";
     let editingDeliveryId = null;
     let allDeliveries = [];
 
@@ -916,7 +1147,7 @@
     async function loadDeliveries() {
       try {
         const company = (user.company || "").trim();
-        const url = `http://localhost:3000/deliveries?company=${encodeURIComponent(company)}`;
+        const url = `/deliveries?company=${encodeURIComponent(company)}`;
         const res = await fetch(url);
         const data = await res.json();
 
@@ -945,6 +1176,10 @@
         if (delivery.estado === 'concluido' && !isManager) {
           return false;
         }
+        // Entregas em curso só visíveis ao trabalhador atribuído (gestores vêem sempre)
+        if (delivery.estado === 'em-curso' && isWorker && delivery.assigned_to !== user.id) {
+          return false;
+        }
         return true;
       });
 
@@ -955,17 +1190,18 @@
 
       visibleDeliveries.forEach(delivery => {
         const tr = document.createElement("tr");
+        const dataSaida = delivery.data_saida ? new Date(delivery.data_saida).toLocaleDateString('pt-PT') : "—";
         const dataPrevista = delivery.data_prevista ? new Date(delivery.data_prevista).toLocaleDateString('pt-PT') : "N/A";
 
         let workerInfo = "";
         if (delivery.worker) {
           workerInfo = `
-            <div style="color: var(--text-primary); font-weight: 600; font-size: 13px;">Trabalhador</div>
+            <div style="color: var(--text-primary); font-weight: 600; font-size: 13px;">Camionista</div>
             <div style="font-size: 14px; color: #60a5fa;">${delivery.worker.name}</div>
           `;
         } else if (delivery.assigned_to) {
           workerInfo = `
-            <div style="color: var(--text-primary); font-weight: 600; font-size: 13px;">Trabalhador (ID: ${delivery.assigned_to})</div>
+            <div style="color: var(--text-primary); font-weight: 600; font-size: 13px;">Camionista (ID: ${delivery.assigned_to})</div>
             <div style="font-size: 14px; color: #f59e0b;">Nome não carregado</div>
           `;
         } else {
@@ -982,19 +1218,20 @@
           <td>${origem}</td>
           <td>${destino}</td>
           <td><span class="badge ${estado}">${formatEstado(estado)}</span></td>
+          <td>${dataSaida}</td>
           <td>${dataPrevista}</td>
           <td>
             <div style="margin-bottom: 8px;">${workerInfo}</div>
             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
               ${isManager ? `
-                <button class="action-btn" onclick="editDelivery(${delivery.id})" title="Editar">✏️</button>
-                <button class="action-btn delete" onclick="deleteDelivery(${delivery.id})" title="Eliminar">🗑️</button>
+                <button class="action-btn" onclick="editDelivery(${delivery.id})" title="Editar"><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'/><path d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'/></svg></button>
+                <button class="action-btn delete" onclick="deleteDelivery(${delivery.id})" title="Eliminar"><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6'/><path d='M10 11v6'/><path d='M14 11v6'/><path d='M9 6V4h6v2'/></svg></button>
               ` : ''}
               ${isWorker && delivery.estado === 'pendente' ? `
-                <button class="action-btn" onclick="openRequestModal(${delivery.id})">🚚 Pedir Entrega</button>
+                <button class="action-btn" onclick="openRequestModal(${delivery.id})"><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='1' y='3' width='15' height='13'/><polygon points='16 8 20 8 23 11 23 16 16 16 16 8'/><circle cx='5.5' cy='18.5' r='2.5'/><circle cx='18.5' cy='18.5' r='2.5'/></svg> Pedir Entrega</button>
               ` : ''}
               ${(isManager || (isWorker && delivery.assigned_to === user.id)) && delivery.estado === 'em-curso' ? `
-                <button class="action-btn" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: rgba(34, 197, 94, 0.4);" onclick="openFinishModal(${delivery.id}, ${delivery.truck_id})" title="Finalizar Entrega">🏁 Finalizar</button>
+                <button class="action-btn" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: rgba(34, 197, 94, 0.4);" onclick="openFinishModal(${delivery.id}, ${delivery.truck_id})" title="Finalizar Entrega"><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z'/><line x1='4' y1='22' x2='4' y2='15'/></svg> Finalizar</button>
               ` : ''}
             </div>
           </td>
@@ -1019,23 +1256,29 @@
       tbody.innerHTML = `<tr><td colspan="${isManager ? 6 : 5}" class="empty-state"><div>📦</div><p>Nenhuma entrega encontrada</p></td></tr>`;
     }
 
-    document.getElementById("searchInput").addEventListener("input", applyFilters);
+    document.getElementById("searchOrigem").addEventListener("input", applyFilters);
+    document.getElementById("searchDestino").addEventListener("input", applyFilters);
+    document.getElementById("searchWorker").addEventListener("input", applyFilters);
     document.getElementById("statusFilter").addEventListener("change", applyFilters);
 
     function applyFilters() {
-      const searchTerm = document.getElementById("searchInput").value.toLowerCase();
+      const searchOrigem = document.getElementById("searchOrigem").value.toLowerCase().trim();
+      const searchDestino = document.getElementById("searchDestino").value.toLowerCase().trim();
+      const searchWorker = document.getElementById("searchWorker").value.toLowerCase().trim();
       const statusFilter = document.getElementById("statusFilter").value;
 
       const filtered = allDeliveries.filter(delivery => {
         const origem = (delivery.origem || "").toLowerCase();
         const destino = (delivery.destino || "").toLowerCase();
-        const tipo = (delivery.tipo || "").toLowerCase();
         const estado = delivery.estado || "pendente";
+        const workerName = (delivery.worker?.name || "").toLowerCase();
 
-        const matchesSearch = origem.includes(searchTerm) || destino.includes(searchTerm) || tipo.includes(searchTerm);
+        const matchesOrigem = !searchOrigem || origem.includes(searchOrigem);
+        const matchesDestino = !searchDestino || destino.includes(searchDestino);
+        const matchesWorker = !searchWorker || workerName.includes(searchWorker);
         const matchesStatus = !statusFilter || estado === statusFilter;
 
-        return matchesSearch && matchesStatus;
+        return matchesOrigem && matchesDestino && matchesWorker && matchesStatus;
       });
 
       renderDeliveries(filtered);
@@ -1064,6 +1307,12 @@
       document.getElementById("destino").value = delivery.destino;
       document.getElementById("estado").value = delivery.estado;
 
+      if (delivery.data_saida) {
+        document.getElementById("dataSaida").value = new Date(delivery.data_saida).toISOString().split('T')[0];
+      } else {
+        document.getElementById("dataSaida").value = "";
+      }
+
       if (delivery.data_prevista) {
         document.getElementById("dataPrevista").value = new Date(delivery.data_prevista).toISOString().split('T')[0];
       } else {
@@ -1077,12 +1326,22 @@
     document.getElementById("deliveryForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
+      const dataSaida = document.getElementById("dataSaida").value;
+      const dataPrevista = document.getElementById("dataPrevista").value;
+
+      // Validar datas no cliente
+      if (dataSaida && dataPrevista && new Date(dataSaida) >= new Date(dataPrevista)) {
+        showFeedbackModal('Atenção', 'A data de saída deve ser anterior à data prevista.', false);
+        return;
+      }
+
       const data = {
         tipo: document.getElementById("tipo").value,
         origem: document.getElementById("origem").value,
         destino: document.getElementById("destino").value,
         estado: document.getElementById("estado").value,
-        dataPrevista: document.getElementById("dataPrevista").value,
+        dataSaida: dataSaida || null,
+        dataPrevista: dataPrevista || null,
         observacoes: document.getElementById("observacoes").value,
         [editingDeliveryId ? 'updatedBy' : 'createdBy']: user.id
       };
@@ -1100,20 +1359,34 @@
 
         const result = await res.json();
         if (!res.ok) {
-          alert(result.message);
+          showFeedbackModal('Erro', result.message || 'Erro ao guardar entrega.', false);
           return;
         }
 
-        alert(result.message);
+        const msgTitle = editingDeliveryId ? 'Sucesso!' : 'Sucesso!';
+        const msgText = editingDeliveryId ? 'Entrega atualizada com sucesso!' : 'Entrega criada com sucesso!';
+        showFeedbackModal(msgTitle, msgText, true);
         closeModal();
         loadDeliveries();
       } catch (err) {
-        alert("Erro ao guardar entrega: " + err.message);
+        showFeedbackModal('Erro', 'Erro ao guardar entrega: ' + err.message, false);
       }
     });
 
     async function deleteDelivery(id) {
-      if (!confirm("Tem certeza que deseja eliminar esta entrega?")) return;
+      const result = await Swal.fire({
+        title: 'Eliminar entrega',
+        html: '<p>Tem a certeza que deseja eliminar esta entrega? Esta ação não pode ser desfeita.</p>',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Eliminar definitivamente',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#9ca3af',
+        reverseButtons: true
+      });
+
+      if (!result.isConfirmed) return;
 
       try {
         const apiUrl = window.location.origin;
@@ -1123,16 +1396,16 @@
           body: JSON.stringify({ deletedBy: user.id })
         });
 
-        const result = await res.json();
+        const body = await res.json();
         if (!res.ok) {
-          alert(result.message);
+          Swal.fire({ title: 'Erro', text: body.message || 'Erro ao eliminar entrega', icon: 'error', confirmButtonColor: '#667eea' });
           return;
         }
 
-        alert(result.message);
+        await Swal.fire({ title: 'Eliminado', text: body.message, icon: 'success', timer: 1400, showConfirmButton: false });
         loadDeliveries();
       } catch (err) {
-        alert("Erro ao eliminar entrega: " + err.message);
+        Swal.fire({ title: 'Erro', text: 'Erro ao eliminar entrega: ' + err.message, icon: 'error', confirmButtonColor: '#667eea' });
       }
     }
 
@@ -1151,31 +1424,63 @@
 
       const select = document.getElementById("requestTruckId");
       select.innerHTML = '<option value="">A carregar camiões...</option>';
+      CustomSelect.refresh(select);
+      select.disabled = true;
+      CustomSelect.setDisabled(select, true);
+
+      // Timeout de 10 segundos para evitar carregamento infinito
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       try {
         const apiUrl = window.location.origin;
-        const res = await fetch(`${apiUrl}/trucks?status=disponivel&company=${user.company}`);
+        const company = encodeURIComponent((user.company || '').trim());
+        const fetchUrl = `${apiUrl}/trucks?status=disponivel&company=${company}`;
+        console.log('[openRequestModal] A buscar camiões:', fetchUrl);
+
+        const res = await fetch(fetchUrl, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        console.log('[openRequestModal] Resposta HTTP:', res.status);
+
+        if (!res.ok) {
+          let errMsg = `Erro do servidor (${res.status})`;
+          try { const errBody = await res.json(); errMsg = errBody.message || errMsg; } catch (_) { }
+          console.error('[openRequestModal] Erro HTTP:', errMsg);
+          select.innerHTML = `<option value="">${errMsg}</option>`;
+          CustomSelect.refresh(select);
+          select.disabled = false;
+          CustomSelect.setDisabled(select, false);
+          return;
+        }
+
         const trucks = await res.json();
+        console.log('[openRequestModal] Camiões recebidos:', trucks);
 
-        // Filtrar camiões em manutenção (mileage_since_maintenance >= 20000)
-        const availableTrucks = trucks.filter(truck => {
-          const mileageSinceMaintenance = truck.mileage_since_maintenance || 0;
-          return mileageSinceMaintenance < 20000;
-        });
-
-        if (availableTrucks.length === 0) {
-          select.innerHTML = '<option value="">Nenhum camião disponível</option>';
+        // O backend já filtra por status=disponivel; não é necessário re-filtrar
+        if (!Array.isArray(trucks) || trucks.length === 0) {
+          select.innerHTML = '<option value="">Nenhum camião disponível de momento</option>';
         } else {
           select.innerHTML = '<option value="">Selecione um camião...</option>';
-          availableTrucks.forEach(t => {
+          trucks.forEach(t => {
             const opt = document.createElement("option");
             opt.value = t.id;
-            opt.textContent = `${t.plate} (${t.model})`;
+            opt.textContent = `${t.plate} — ${t.model} (${t.mileage ? t.mileage.toLocaleString('pt-PT') + ' km' : 'km N/D'})`;
             select.appendChild(opt);
           });
         }
+        CustomSelect.refresh(select);
       } catch (err) {
-        select.innerHTML = '<option value="">Erro ao carregar camiões</option>';
+        clearTimeout(timeoutId);
+        console.error('[openRequestModal] Erro ao carregar camiões:', err);
+        const msg = err.name === 'AbortError'
+          ? 'Tempo de espera esgotado. Verifique a ligação ao servidor.'
+          : 'Erro ao carregar camiões: ' + (err.message || 'Erro desconhecido');
+        select.innerHTML = `<option value="">${msg}</option>`;
+        CustomSelect.refresh(select);
+      } finally {
+        select.disabled = false;
+        CustomSelect.setDisabled(select, false);
       }
     }
 
@@ -1191,7 +1496,7 @@
       const truckId = document.getElementById("requestTruckId").value;
 
       if (!truckId) {
-        alert("Por favor selecione um camião.");
+        showFeedbackModal('Atenção', 'Por favor selecione um camião.', false);
         return;
       }
 
@@ -1209,14 +1514,14 @@
 
         const data = await res.json();
         if (res.ok) {
-          alert("Pedido enviado com sucesso!");
+          showFeedbackModal('Sucesso!', 'Pedido enviado com sucesso!', true);
           closeRequestModal();
           loadDeliveries();
         } else {
-          alert("Erro: " + data.message);
+          showFeedbackModal('Erro', 'Erro: ' + data.message, false);
         }
       } catch (err) {
-        alert("Erro ao enviar pedido: " + err.message);
+        showFeedbackModal('Erro', 'Erro ao enviar pedido: ' + err.message, false);
       }
     });
 
@@ -1288,9 +1593,9 @@
             <p><strong>Motorista:</strong> ${req.worker?.name || 'Desconhecido'}</p>
           </div>
           <div class="request-actions">
-            <button class="btn-details" onclick="openDetailModal(${req.id})">🔍 Detalhes</button>
-            <button class="btn-approve" onclick="respondRequest(${req.id}, true)">✅ Aceitar</button>
-            <button class="btn-reject" onclick="respondRequest(${req.id}, false)">❌ Recusar</button>
+            <button class="btn-details" onclick="openDetailModal(${req.id})"><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;margin-right:4px'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>Detalhes</button>
+            <button class="btn-approve" onclick="respondRequest(${req.id}, true)"><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;margin-right:4px'><polyline points='20 6 9 17 4 12'/></svg>Aceitar</button>
+            <button class="btn-reject" onclick="respondRequest(${req.id}, false)"><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;margin-right:4px'><line x1='18' y1='6' x2='6' y2='18'/><line x1='6' y1='6' x2='18' y2='18'/></svg>Recusar</button>
           </div>
         `;
         container.appendChild(item);
@@ -1322,8 +1627,8 @@
       const actions = document.getElementById("detailActions");
       actions.innerHTML = `
         <button class="btn-secondary" onclick="closeDetailModal()">Fechar</button>
-        <button class="btn-approve" onclick="respondRequest(${req.id}, true); closeDetailModal();">✅ Aprovar</button>
-        <button class="btn-reject" onclick="respondRequest(${req.id}, false); closeDetailModal();">❌ Recusar</button>
+        <button class="btn-approve" onclick="respondRequest(${req.id}, true); closeDetailModal();"><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;margin-right:4px'><polyline points='20 6 9 17 4 12'/></svg>Aprovar</button>
+        <button class="btn-reject" onclick="respondRequest(${req.id}, false); closeDetailModal();"><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;margin-right:4px'><line x1='18' y1='6' x2='6' y2='18'/><line x1='6' y1='6' x2='18' y2='18'/></svg>Recusar</button>
       `;
 
       document.getElementById("requestDetailModal").style.display = "flex";
@@ -1345,17 +1650,18 @@
 
         const data = await res.json();
         if (res.ok) {
-          alert(approved ? "Solicitação aprovada!" : "Solicitação recusada.");
+          const message = approved ? "A solicitação foi aprovada com sucesso." : "A solicitação foi recusada com sucesso.";
+          showFeedbackModal('Sucesso!', message, true);
           await loadPendingRequests();
           loadDeliveries();
           if (document.getElementById("notificationDropdown").classList.contains("active")) {
             renderRequestsList();
           }
         } else {
-          alert("Erro: " + data.message);
+          showFeedbackModal('Erro', 'Erro: ' + data.message, false);
         }
       } catch (err) {
-        alert("Erro ao responder: " + err.message);
+        showFeedbackModal('Erro', 'Erro ao responder: ' + err.message, false);
       }
     }
 
@@ -1393,7 +1699,7 @@
 
         const data = await res.json();
         console.log("Resposta do servidor:", { status: res.status, data });
-        
+
         if (res.ok) {
           closeFinishModal();
           loadDeliveries();
@@ -1417,7 +1723,7 @@
             });
           } else {
             Swal.fire({
-              title: '✅ Entrega Finalizada!',
+              title: 'Entrega Finalizada!',
               text: 'A entrega foi concluída com sucesso.',
               icon: 'success',
               background: '#1e293b',
@@ -1435,6 +1741,41 @@
         Swal.fire('Erro', 'Erro ao finalizar entrega: ' + err.message, 'error');
       }
     });
+
+    let feedbackModalTimeout = null;
+
+    function showFeedbackModal(title, message, success) {
+      const modalBg = document.getElementById('feedbackModalBg');
+      const modalTitle = document.getElementById('feedbackModalTitle');
+      const modalMessage = document.getElementById('feedbackModalMessage');
+      const modalIcon = document.getElementById('feedbackModalIcon');
+
+      modalTitle.textContent = title;
+      modalMessage.textContent = message;
+      modalIcon.innerHTML = success
+        ? '<i data-lucide="check" style="width:28px;height:28px;"></i>'
+        : '<i data-lucide="x" style="width:28px;height:28px;"></i>';
+      lucide.createIcons({ nodes: [modalIcon] });
+      modalIcon.style.background = success ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+      modalIcon.style.color = success ? '#22c55e' : '#f87171';
+      modalBg.style.display = 'flex';
+      requestAnimationFrame(() => modalBg.classList.add('show'));
+
+      clearTimeout(feedbackModalTimeout);
+      if (success) {
+        feedbackModalTimeout = setTimeout(closeFeedbackModal, 5000);
+      }
+    }
+
+    function closeFeedbackModal() {
+      const modalBg = document.getElementById('feedbackModalBg');
+      modalBg.classList.remove('show');
+      modalBg.addEventListener('transitionend', function handler() {
+        modalBg.style.display = 'none';
+        modalBg.removeEventListener('transitionend', handler);
+      });
+      clearTimeout(feedbackModalTimeout);
+    }
 
     loadDeliveries();
     lucide.createIcons();

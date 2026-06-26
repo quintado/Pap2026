@@ -212,7 +212,7 @@
       text-transform: uppercase;
     }
 
-    .role-fundador {
+    .role-CEO {
       background: rgba(239, 68, 68, 0.2);
       color: #f87171;
     }
@@ -222,7 +222,7 @@
       color: #60a5fa;
     }
 
-    .role-trabalhador {
+    .role-camionista {
       background: rgba(16, 185, 129, 0.2);
       color: #34d399;
     }
@@ -427,7 +427,7 @@
         <label>Cargo:</label>
         <select id="newUserRole">
           <option value="supervisor">Supervisor</option>
-          <option value="trabalhador">Trabalhador</option>
+          <option value="camionista">Camionista</option>
         </select>
       </div>
       <div class="modal-footer">
@@ -455,7 +455,7 @@
         <label>Cargo:</label>
         <select id="editUserRole">
           <option value="supervisor">Supervisor</option>
-          <option value="trabalhador">Trabalhador</option>
+          <option value="camionista">Camionista</option>
         </select>
       </div>
       <div class="modal-footer">
@@ -474,7 +474,7 @@
       window.location.href = 'index.html';
     }
 
-    if (currentUser.role !== 'fundador') {
+    if (currentUser.role !== 'CEO') {
       window.location.href = 'dashboard.html';
     }
 
@@ -486,6 +486,9 @@
         const users = await res.json();
         const usersGrid = document.getElementById('usersGrid');
         usersGrid.innerHTML = '';
+
+        const roleOrder = { 'CEO': 0, 'supervisor': 1, 'camionista': 2 };
+        users.sort((a, b) => (roleOrder[a.role] ?? 99) - (roleOrder[b.role] ?? 99));
 
         users.forEach(user => {
           const card = document.createElement('div');
@@ -515,9 +518,9 @@
 
     function formatRole(role) {
       const roleMap = {
-        'fundador': 'Fundador',
+        'CEO': 'CEO',
         'supervisor': 'Supervisor',
-        'trabalhador': 'Trabalhador'
+        'camionista': 'Camionista'
       };
       return roleMap[role] || role;
     }

@@ -80,6 +80,18 @@ const validateDelivery = [
     body('dataPrevista')
         .optional({ checkFalsy: true })
         .isISO8601().withMessage('Data prevista inválida'),
+    body('dataSaida')
+        .optional({ checkFalsy: true })
+        .isISO8601().withMessage('Data de saída inválida')
+        .custom((dataSaida, { req }) => {
+            const dataPrevista = req.body.dataPrevista;
+            if (dataSaida && dataPrevista) {
+                if (new Date(dataSaida) >= new Date(dataPrevista)) {
+                    throw new Error('A data de saída deve ser anterior à data prevista.');
+                }
+            }
+            return true;
+        }),
     body('observacoes')
         .optional()
         .trim()
@@ -103,7 +115,7 @@ const validateUserCreation = [
         .isLength({ min: 6 }).withMessage('Palavra-passe deve ter no mínimo 6 caracteres'),
     body('role')
         .notEmpty().withMessage('Função é obrigatória')
-        .isIn(['fundador', 'supervisor', 'trabalhador']).withMessage('Função inválida'),
+        .isIn(['CEO', 'supervisor', 'camionista']).withMessage('Função inválida'),
     body('createdBy')
         .notEmpty().withMessage('ID do criador é obrigatório')
         .isInt().withMessage('ID do criador inválido'),

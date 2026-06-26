@@ -305,6 +305,31 @@
         padding: 20px;
       }
     }
+
+    /* Loading skeleton for stat cards */
+    .card p.loading {
+      position: relative;
+      color: transparent !important;
+      -webkit-text-fill-color: transparent !important;
+      background: rgba(255, 255, 255, 0.08) !important;
+      border-radius: 8px;
+      min-width: 60px;
+      display: inline-block;
+      overflow: hidden;
+    }
+
+    .card p.loading::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%);
+      animation: shimmer 1.4s infinite;
+    }
+
+    @keyframes shimmer {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
   </style>
 </head>
 
@@ -320,6 +345,7 @@
             style="width: 18px; height: 18px;"></i> Dashboard</a></li>
       <li><a href="entregas.html"><i data-lucide="package" style="width: 18px; height: 18px;"></i> Entregas</a></li>
       <li><a href="camioes.html"><i data-lucide="truck" style="width: 18px; height: 18px;"></i> Camiões</a></li>
+      <li><a href="calendario.html"><i data-lucide="calendar" style="width: 18px; height: 18px;"></i> Calendário</a></li>
       <li><a href="config.html"><i data-lucide="settings" style="width: 18px; height: 18px;"></i> Configurações</a></li>
     </ul>
     <div class="sidebar-footer">
@@ -343,17 +369,17 @@
         <span class="card-icon"><i data-lucide="check-circle"
             style="width: 36px; height: 36px; color: #059669;"></i></span>
         <h3>Entregas Concluídas</h3>
-        <p id="completedDeliveries">25</p>
+        <p id="completedDeliveries" class="loading">&nbsp;&nbsp;&nbsp;&nbsp;</p>
       </div>
       <div class="card">
         <span class="card-icon"><i data-lucide="truck" style="width: 36px; height: 36px; color: #3b82f6;"></i></span>
         <h3>Em Trânsito</h3>
-        <p id="ongoingDeliveries">7</p>
+        <p id="ongoingDeliveries" class="loading">&nbsp;&nbsp;&nbsp;&nbsp;</p>
       </div>
       <div class="card">
         <span class="card-icon"><i data-lucide="activity" style="width: 36px; height: 36px; color: #0ea5e9;"></i></span>
         <h3>Camiões Ativos</h3>
-        <p id="activeTrucks">12</p>
+        <p id="activeTrucks" class="loading">&nbsp;&nbsp;&nbsp;&nbsp;</p>
       </div>
     </div>
 
@@ -394,18 +420,26 @@
       window.location.href = "index.html";
     });
 
+    const apiBase = window.location.origin && window.location.origin.startsWith('http')
+      ? window.location.origin
+      : 'http://localhost:3000';
+
+    const company = (user.company || '').trim();
+    const completedEl = document.getElementById('completedDeliveries');
+    const ongoingEl = document.getElementById('ongoingDeliveries');
+    const activeTrucksEl = document.getElementById('activeTrucks');
     const ctx = document.getElementById('weeklyChart').getContext('2d');
     const gradient = ctx.createLinearGradient(0, 0, 0, 300);
     gradient.addColorStop(0, 'rgba(37, 99, 235, 0.3)');
     gradient.addColorStop(1, 'rgba(37, 99, 235, 0.05)');
 
-    new Chart(ctx, {
+    const dashboardChart = new Chart(ctx, {
       type: 'line',
       data: {
         labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
         datasets: [{
           label: 'Entregas',
-          data: [5, 7, 6, 8, 9, 10, 4],
+          data: [0, 0, 0, 0, 0, 0, 0],
           fill: true,
           borderColor: '#2563eb',
           backgroundColor: gradient,
@@ -455,6 +489,60 @@
       }
     });
 
+    async function loadDashboardStats() {
+      if (!company) {
+        console.warn('Empresa do utilizador não definida.');
+        completedEl.classList.remove('loading');
+        ongoingEl.classList.remove('loading');
+        activeTrucksEl.classList.remove('loading');
+        completedEl.textContent = '—';
+        ongoingEl.textContent = '—';
+        activeTrucksEl.textContent = '—';
+        return;
+      }
+
+      try {
+        const response = await fetch(`${apiBase}/stats/company/${encodeURIComponent(company)}`);
+        const stats = await response.json();
+
+        if (!response.ok) {
+          console.error('Erro ao buscar estatísticas do dashboard:', stats);
+          completedEl.classList.remove('loading');
+          ongoingEl.classList.remove('loading');
+          activeTrucksEl.classList.remove('loading');
+          completedEl.textContent = '—';
+          ongoingEl.textContent = '—';
+          activeTrucksEl.textContent = '—';
+          return;
+        }
+
+        completedEl.classList.remove('loading');
+        ongoingEl.classList.remove('loading');
+        activeTrucksEl.classList.remove('loading');
+
+        completedEl.textContent = stats.completed ?? 0;
+        ongoingEl.textContent = stats.ongoing ?? 0;
+        activeTrucksEl.textContent = stats.activeTrucks ?? 0;
+
+        if (Array.isArray(stats.chartData) && stats.chartData.length > 0) {
+          const labels = stats.chartData.map(entry => entry.month || 'N/A');
+          const values = stats.chartData.map(entry => Number(entry.deliveries || 0));
+          dashboardChart.data.labels = labels;
+          dashboardChart.data.datasets[0].data = values;
+          dashboardChart.update();
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados do dashboard:', error);
+        completedEl.classList.remove('loading');
+        ongoingEl.classList.remove('loading');
+        activeTrucksEl.classList.remove('loading');
+        completedEl.textContent = '—';
+        ongoingEl.textContent = '—';
+        activeTrucksEl.textContent = '—';
+      }
+    }
+
+    loadDashboardStats();
     lucide.createIcons();
   </script>
 </body>

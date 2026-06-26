@@ -9,7 +9,9 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap"
     rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="css/modern-design.css">
+  <script src="/public/js/custom-select.js"></script>
   <style>
     body {
       display: flex;
@@ -227,6 +229,11 @@
       box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
     }
 
+    #saveCompanyBtn:hover {
+      background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4) !important;
+    }
+
     .user-box {
       background: rgba(255, 255, 255, 0.08);
       padding: 14px;
@@ -364,10 +371,162 @@
         padding: 20px;
       }
     }
+
+    /* Custom select component styles */
+    .custom-select-wrapper {
+      position: relative;
+      width: 100%;
+    }
+
+    .custom-select-selected {
+      background: #0f172a;
+      color: #fff;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .custom-select-options {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 6px);
+      background: #1e293b;
+      border-radius: 8px;
+      max-height: 240px;
+      overflow: auto;
+      box-shadow: 0 10px 30px rgba(2, 6, 23, 0.6);
+      z-index: 3000;
+      display: none;
+      padding: 6px 0;
+    }
+
+    .custom-select-options.open {
+      display: block;
+    }
+
+    .custom-select-option {
+      padding: 10px 14px;
+      color: #fff;
+      list-style: none;
+      cursor: pointer;
+    }
+
+    .custom-select-option:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .custom-select-option.selected {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .feedback-modal-bg {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 11000;
+      padding: 24px;
+      opacity: 0;
+      transition: opacity 0.24s ease;
+    }
+
+    .feedback-modal-bg.show {
+      display: flex;
+      opacity: 1;
+    }
+
+    .feedback-modal-content {
+      width: min(480px, 100%);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98));
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+      padding: 32px 30px;
+      text-align: center;
+      transform: translateY(-20px) scale(0.98);
+      opacity: 0;
+      transition: transform 0.24s ease, opacity 0.24s ease;
+    }
+
+    .feedback-modal-bg.show .feedback-modal-content {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    .feedback-modal-icon {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
+    }
+
+    .feedback-modal-title {
+      margin: 0 0 12px;
+      font-size: 26px;
+      color: #f8fafc;
+      font-weight: 800;
+    }
+
+    .feedback-modal-text {
+      margin: 0 0 28px;
+      color: rgba(248, 250, 252, 0.8);
+      font-size: 15px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .feedback-modal-button {
+      background: linear-gradient(135deg, #6366f1, #818cf8);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 24px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .feedback-modal-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 28px rgba(99, 102, 241, 0.25);
+    }
   </style>
 </head>
 
 <body>
+  <div id="feedbackModalBg" class="feedback-modal-bg"
+    onclick="if(event.target.id==='feedbackModalBg') closeFeedbackModal()">
+    <div class="feedback-modal-content">
+      <div class="feedback-modal-icon" id="feedbackModalIcon"><i data-lucide="check" style="width:28px;height:28px;"></i></div>
+      <h2 class="feedback-modal-title" id="feedbackModalTitle">Sucesso!</h2>
+      <p class="feedback-modal-text" id="feedbackModalMessage">Utilizador criado com sucesso!</p>
+      <button class="feedback-modal-button" onclick="closeFeedbackModal()">OK</button>
+    </div>
+  </div>
+
+  <div id="confirmModalBg" class="feedback-modal-bg"
+    onclick="if(event.target.id==='confirmModalBg') closeConfirmModal()">
+    <div class="feedback-modal-content">
+      <h2 class="feedback-modal-title" id="confirmModalTitle">Confirmar Eliminação</h2>
+      <p class="feedback-modal-text" id="confirmModalMessage">Tens a certeza que queres eliminar este utilizador?</p>
+      <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <button class="feedback-modal-button" onclick="closeConfirmModal()"
+          style="flex: 1; background: rgba(255, 255, 255, 0.08); color: #f8fafc;">Cancelar</button>
+        <button class="feedback-modal-button" onclick="confirmDeleteUser()"
+          style="flex: 1; background: linear-gradient(135deg, #ef4444, #dc2626);">Eliminar</button>
+      </div>
+    </div>
+  </div>
 
   <nav class="sidebar">
     <div class="sidebar-logo">
@@ -380,6 +539,7 @@
           Dashboard</a></li>
       <li><a href="entregas.html"><i data-lucide="package" style="width: 18px; height: 18px;"></i> Entregas</a></li>
       <li><a href="camioes.html"><i data-lucide="truck" style="width: 18px; height: 18px;"></i> Camiões</a></li>
+      <li><a href="calendario.html"><i data-lucide="calendar" style="width: 18px; height: 18px;"></i> Calendário</a></li>
       <li><a class="active" href="config.html"><i data-lucide="settings" style="width: 18px; height: 18px;"></i>
           Configurações</a></li>
     </ul>
@@ -418,6 +578,43 @@
       <button class="save-btn" onclick="createUser()">Criar Utilizador</button>
     </div>
 
+    <!-- Card visível apenas ao CEO -->
+    <div class="card" id="companyCard" style="display:none;">
+      <h2><i data-lucide="building-2" style="width: 22px; height: 22px; margin-right: 8px;"></i>Nome da Empresa</h2>
+      <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 16px;">
+        Altera o nome da empresa em todo o sistema. Esta ação atualiza todos os utilizadores, entregas e camiões associados.
+      </p>
+      <div class="form-group">
+        <label>Nome Atual</label>
+        <input type="text" id="currentCompanyDisplay" disabled>
+      </div>
+      <div class="form-group">
+        <label>Novo Nome da Empresa</label>
+        <input type="text" id="newCompanyName" placeholder="Escreve o novo nome da empresa...">
+      </div>
+      <button class="save-btn" id="saveCompanyBtn" onclick="saveCompanyName()"
+        style="background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
+        <i data-lucide="shield-check" style="width:16px;height:16px;display:inline;margin-right:6px;"></i>Alterar Nome da Empresa
+      </button>
+    </div>
+
+    <!-- Card Eliminar Empresa — visível apenas ao CEO -->
+    <div class="card" id="deleteCompanyCard" style="display:none; border: 1px solid rgba(239,68,68,0.3); background: linear-gradient(135deg, rgba(239,68,68,0.06), rgba(30,41,59,0.95));">
+      <h2 style="color:#f87171;"><i data-lucide="trash-2" style="width:22px;height:22px;margin-right:8px;"></i>Eliminar Empresa</h2>
+      <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; display:flex; align-items:flex-start; gap:8px;">
+        <i data-lucide="alert-triangle" style="width:18px;height:18px;flex-shrink:0;color:#f87171;margin-top:2px;"></i>
+        <span>Esta acção é <strong style="color:#f87171;">irreversível</strong>. Irá eliminar permanentemente a empresa,
+        todos os utilizadores, entregas e camiões associados. Não poderás recuperar estes dados.</span>
+      </p>
+      <button id="deleteCompanyBtn" onclick="deleteCompany()"
+        style="background: linear-gradient(135deg, #dc2626, #ef4444); color: white; border: none;
+               padding: 12px 24px; border-radius: 10px; font-weight: 600; font-size: 14px;
+               cursor: pointer; box-shadow: 0 4px 16px rgba(239,68,68,0.4); transition: all 0.3s; width: 100%;">
+        <i data-lucide="trash-2" style="width:16px;height:16px;display:inline;margin-right:6px;"></i>
+        Eliminar Empresa Permanentemente
+      </button>
+    </div>
+
     <div class="card">
       <h2><i data-lucide="user-circle" style="width: 22px; height: 22px; margin-right: 8px;"></i>A Minha Conta</h2>
 
@@ -452,9 +649,9 @@
       <div class="form-group">
         <label>Cargo</label>
         <select id="editRole">
-          <option value="trabalhador">Trabalhador</option>
+          <option value="camionista">Camionista</option>
           <option value="supervisor">Supervisor</option>
-          <option value="fundador">Fundador</option>
+          <option value="CEO">CEO</option>
         </select>
       </div>
 
@@ -472,16 +669,24 @@
 
     let selectedUserId = null;
 
-    if (currentUser.role === "trabalhador") {
+    if (currentUser.role === "camionista") {
       document.getElementById("usersCard").style.display = "none";
+    }
+
+    // Mostrar secção de nome da empresa apenas ao CEO
+    if (currentUser.role === "CEO") {
+      const companyCard = document.getElementById("companyCard");
+      companyCard.style.display = "block";
+      document.getElementById("currentCompanyDisplay").value = currentUser.company;
+      document.getElementById("deleteCompanyCard").style.display = "block";
     }
 
     function populateRoleSelect() {
       const select = document.getElementById("newUserRole");
       select.innerHTML = "";
 
-      const roles = ["trabalhador", "supervisor"];
-      if (currentUser.role === "fundador") roles.push("fundador");
+      const roles = ["camionista", "supervisor"];
+      if (currentUser.role === "CEO") roles.push("CEO");
 
       roles.forEach(r => {
         const opt = document.createElement("option");
@@ -500,12 +705,15 @@
       const list = document.getElementById("usersList");
       list.innerHTML = "";
 
+      const roleOrder = { 'CEO': 0, 'supervisor': 1, 'camionista': 2 };
+      users.sort((a, b) => (roleOrder[a.role] ?? 99) - (roleOrder[b.role] ?? 99));
+
       users.forEach(u => {
         const box = document.createElement("div");
         box.classList = "user-box";
 
         let detailsBtn = "";
-        if (currentUser.role === "fundador") {
+        if (currentUser.role === "CEO") {
           detailsBtn = `<button class="details-btn" onclick="openDetails(${u.id}, '${u.name}', '${u.role}')">Detalhes</button>`;
         }
 
@@ -521,14 +729,17 @@
       });
     }
 
-    if (currentUser.role !== "trabalhador") loadUsers();
+    if (currentUser.role !== "camionista") loadUsers();
 
     async function createUser() {
       const name = document.getElementById("newUserName").value.trim();
       const password = document.getElementById("newUserPassword").value.trim();
       const role = document.getElementById("newUserRole").value;
 
-      if (!name || !password) return alert("Preencha todos os campos.");
+      if (!name || !password) {
+        showFeedbackModal('Atenção', 'Preencha todos os campos.', false);
+        return;
+      }
 
       const apiUrl = window.location.origin;
       const res = await fetch(`${apiUrl}/create-user`, {
@@ -541,10 +752,87 @@
       });
 
       const data = await res.json();
-      if (!res.ok) return alert(data.message);
+      if (!res.ok) {
+        showFeedbackModal('Erro', data.message || 'Erro ao criar utilizador.', false);
+        return;
+      }
 
-      alert("Utilizador criado!");
+      showFeedbackModal('Sucesso!', `Utilizador "${name}" criado com sucesso!\nA lista foi atualizada.`, true);
+      document.getElementById("newUserName").value = "";
+      document.getElementById("newUserPassword").value = "";
+      document.getElementById("newUserRole").selectedIndex = 0;
       loadUsers();
+    }
+
+    let feedbackModalTimeout = null;
+
+    function showFeedbackModal(title, message, success) {
+      const modalBg = document.getElementById('feedbackModalBg');
+      const modalTitle = document.getElementById('feedbackModalTitle');
+      const modalMessage = document.getElementById('feedbackModalMessage');
+      const modalIcon = document.getElementById('feedbackModalIcon');
+
+      modalTitle.textContent = title;
+      modalMessage.textContent = message;
+      modalIcon.innerHTML = success
+        ? '<i data-lucide="check" style="width:28px;height:28px;"></i>'
+        : '<i data-lucide="x" style="width:28px;height:28px;"></i>';
+      lucide.createIcons({ nodes: [modalIcon] });
+      modalIcon.style.background = success ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+      modalIcon.style.color = success ? '#22c55e' : '#f87171';
+      modalBg.style.display = 'flex';
+      requestAnimationFrame(() => modalBg.classList.add('show'));
+
+      clearTimeout(feedbackModalTimeout);
+      if (success) {
+        feedbackModalTimeout = setTimeout(closeFeedbackModal, 5000);
+      }
+    }
+
+    function closeFeedbackModal() {
+      const modalBg = document.getElementById('feedbackModalBg');
+      modalBg.classList.remove('show');
+      modalBg.addEventListener('transitionend', function handler() {
+        modalBg.style.display = 'none';
+        modalBg.removeEventListener('transitionend', handler);
+      });
+      clearTimeout(feedbackModalTimeout);
+    }
+
+    function checkDeleteConfirm() {
+      const input = document.getElementById("deleteCompanyConfirmInput").value.trim();
+      const btn = document.getElementById("deleteCompanyBtn");
+      const match = input === currentUser.company;
+      btn.disabled = !match;
+      btn.style.cursor = match ? 'pointer' : 'not-allowed';
+      btn.style.opacity = match ? '1' : '0.5';
+      btn.style.background = match
+        ? 'linear-gradient(135deg, #dc2626, #ef4444)'
+        : 'rgba(239,68,68,0.15)';
+      btn.style.boxShadow = match ? '0 4px 16px rgba(239,68,68,0.4)' : 'none';
+    }
+
+    async function deleteCompany() {
+      const apiUrl = window.location.origin;
+      try {
+        const res = await fetch(`${apiUrl}/delete-company`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: currentUser.id, company: currentUser.company })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showFeedbackModal('Erro', data.message || 'Erro ao eliminar empresa.', false);
+          return;
+        }
+
+        localStorage.removeItem("user");
+        showFeedbackModal('Empresa Eliminada', 'A empresa e todos os dados foram eliminados permanentemente.', true);
+        setTimeout(() => { window.location.href = "index.html"; }, 2500);
+      } catch (err) {
+        showFeedbackModal('Erro', 'Erro ao eliminar empresa: ' + err.message, false);
+      }
     }
 
     function openDetails(id, name, role) {
@@ -574,15 +862,42 @@
       });
 
       const data = await res.json();
-      if (!res.ok) return alert(data.message);
+      if (!res.ok) {
+        showFeedbackModal('Erro', data.message || 'Erro ao atualizar utilizador.', false);
+        return;
+      }
 
-      alert("Utilizador atualizado!");
+      showFeedbackModal('Sucesso!', 'Utilizador atualizado com sucesso!', true);
       closeModal();
       loadUsers();
     }
 
     async function deleteUser() {
-      if (!confirm("Tens a certeza que queres eliminar este utilizador?")) return;
+      showConfirmModal('Confirmar Eliminação', 'Tens a certeza que queres eliminar este utilizador?');
+    }
+
+    function showConfirmModal(title, message) {
+      const modalBg = document.getElementById('confirmModalBg');
+      const modalTitle = document.getElementById('confirmModalTitle');
+      const modalMessage = document.getElementById('confirmModalMessage');
+
+      modalTitle.textContent = title;
+      modalMessage.textContent = message;
+      modalBg.style.display = 'flex';
+      requestAnimationFrame(() => modalBg.classList.add('show'));
+    }
+
+    function closeConfirmModal() {
+      const modalBg = document.getElementById('confirmModalBg');
+      modalBg.classList.remove('show');
+      modalBg.addEventListener('transitionend', function handler() {
+        modalBg.style.display = 'none';
+        modalBg.removeEventListener('transitionend', handler);
+      });
+    }
+
+    async function confirmDeleteUser() {
+      closeConfirmModal();
 
       const apiUrl = window.location.origin;
       const res = await fetch(`${apiUrl}/delete-user/${selectedUserId}`, {
@@ -594,11 +909,55 @@
       });
 
       const data = await res.json();
-      if (!res.ok) return alert(data.message);
+      if (!res.ok) {
+        showFeedbackModal('Erro', data.message || 'Erro ao eliminar utilizador.', false);
+        return;
+      }
 
-      alert("Utilizador eliminado!");
+      showFeedbackModal('Sucesso!', 'Utilizador eliminado com sucesso!', true);
       closeModal();
       loadUsers();
+    }
+
+    async function saveCompanyName() {
+      const newName = document.getElementById("newCompanyName").value.trim();
+
+      if (!newName) {
+        showFeedbackModal('Atenção', 'Por favor, escreve o novo nome da empresa.', false);
+        return;
+      }
+
+      if (newName === currentUser.company) {
+        showFeedbackModal('Atenção', 'O novo nome é igual ao nome atual.', false);
+        return;
+      }
+
+      const apiUrl = window.location.origin;
+      try {
+        const res = await fetch(`${apiUrl}/update-company`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ newCompanyName: newName, updatedBy: currentUser.id })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          showFeedbackModal('Erro', data.message || 'Erro ao atualizar nome da empresa.', false);
+          return;
+        }
+
+        // Atualizar localStorage com o novo nome
+        currentUser.company = data.newCompanyName;
+        localStorage.setItem("user", JSON.stringify(currentUser));
+
+        document.getElementById("currentCompanyDisplay").value = data.newCompanyName;
+        document.getElementById("empresa").value = data.newCompanyName;
+        document.getElementById("newCompanyName").value = "";
+
+        showFeedbackModal('Sucesso!', `Nome da empresa alterado para "${data.newCompanyName}" com sucesso!`, true);
+      } catch (err) {
+        showFeedbackModal('Erro', 'Erro ao atualizar nome da empresa: ' + err.message, false);
+      }
     }
 
     async function saveAccount() {
@@ -606,19 +965,54 @@
       const newName = document.getElementById("nome").value.trim();
 
       if (!newPassword && !newName) {
-        return alert("Nada para atualizar.");
+        showFeedbackModal('Atenção', 'Nada para atualizar.', false);
+        return;
       }
 
-      if (newPassword) {
-        const apiUrl = window.location.origin;
-        await fetch(`${apiUrl}/update-password`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: currentUser.id, newPassword })
-        });
-      }
+      const apiUrl = window.location.origin;
 
-      alert("Dados atualizados!");
+      try {
+        // Atualizar nome (se preenchido e diferente do atual)
+        if (newName && newName !== currentUser.name) {
+          const resName = await fetch(`${apiUrl}/update-own-name`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: currentUser.id, newName })
+          });
+          const dataName = await resName.json();
+
+          if (!resName.ok) {
+            showFeedbackModal('Erro', dataName.message || 'Erro ao atualizar nome.', false);
+            return;
+          }
+
+          // Atualizar localStorage com o novo nome
+          currentUser.name = dataName.newName;
+          localStorage.setItem("user", JSON.stringify(currentUser));
+          document.getElementById("nome").value = dataName.newName;
+        }
+
+        // Atualizar palavra-passe (se preenchida)
+        if (newPassword) {
+          const res = await fetch(`${apiUrl}/update-password`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: currentUser.id, newPassword })
+          });
+          const data = await res.json();
+
+          if (!res.ok) {
+            showFeedbackModal('Erro', data.message || 'Erro ao atualizar palavra-passe.', false);
+            return;
+          }
+        }
+
+        showFeedbackModal('Sucesso!', 'Dados atualizados com sucesso!', true);
+        document.getElementById("password").value = "";
+      } catch (err) {
+        console.error('Error:', err);
+        showFeedbackModal('Erro', 'Erro ao guardar dados: ' + err.message, false);
+      }
     }
 
     document.getElementById("logout").onclick = () => {

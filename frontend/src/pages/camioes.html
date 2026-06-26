@@ -392,6 +392,34 @@
         padding: 24px;
       }
     }
+
+    @keyframes plate-shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      20% {
+        transform: translateX(-6px);
+      }
+
+      40% {
+        transform: translateX(6px);
+      }
+
+      60% {
+        transform: translateX(-4px);
+      }
+
+      80% {
+        transform: translateX(4px);
+      }
+    }
+
+    .plate-shake {
+      animation: plate-shake 0.45s ease;
+    }
   </style>
 </head>
 
@@ -409,6 +437,8 @@
       <li><a href="entregas.html"><i data-lucide="package" style="width: 18px; height: 18px;"></i> Entregas</a></li>
       <li><a class="active" href="camioes.html"><i data-lucide="truck" style="width: 18px; height: 18px;"></i>
           Camiões</a></li>
+      <li><a href="calendario.html"><i data-lucide="calendar" style="width: 18px; height: 18px;"></i> Calendário</a>
+      </li>
       <li><a href="config.html"><i data-lucide="settings" style="width: 18px; height: 18px;"></i> Configurações</a></li>
     </ul>
     <div class="sidebar-footer">
@@ -477,21 +507,26 @@
   <div id="modal-maintenance" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>🔧 Manutenção Necessária</h2>
+        <h2><i data-lucide="wrench" style="width:20px;height:20px;margin-right:8px;"></i>Manutenção Necessária</h2>
         <span class="close" onclick="closeMaintenance()">&times;</span>
       </div>
       <div style="padding: 20px; text-align: center;">
-        <p style="color: #f59e0b; font-size: 16px; margin-bottom: 12px;">
-          ⚠️ Este camião atingiu o limite de quilometragem e necessita de manutenção.
-        </p>
+          <p style="color: #f59e0b; font-size: 16px; margin-bottom: 12px; display:flex; align-items:center; justify-content:center; gap:8px;">
+            <i data-lucide="alert-triangle" style="width:20px;height:20px;flex-shrink:0;"></i>
+            Este camião atingiu o limite de quilometragem e necessita de manutenção.
+          </p>
         <p style="color: var(--text-secondary); margin-bottom: 24px;">
           Deseja realizar a manutenção agora? Se sim, o camião ficará disponível novamente.
           Se não, o camião permanecerá em manutenção e não poderá ser utilizado.
         </p>
       </div>
       <div class="form-footer">
-        <button type="button" class="btn-secondary" onclick="declineMaintenance()">❌ Não, depois</button>
-        <button type="button" class="btn-primary" onclick="confirmMaintenance()">✅ Sim, realizar manutenção</button>
+        <button type="button" class="btn-secondary" onclick="declineMaintenance()">
+          <i data-lucide="x-circle" style="width:16px;height:16px;display:inline;margin-right:6px;"></i>Não, depois
+        </button>
+        <button type="button" class="btn-primary" onclick="confirmMaintenance()">
+          <i data-lucide="check-circle" style="width:16px;height:16px;display:inline;margin-right:6px;"></i>Sim, realizar manutenção
+        </button>
       </div>
     </div>
   </div>
@@ -503,7 +538,7 @@
       window.location.href = "index.html";
     } else {
       const userRole = (user.role || "").toLowerCase();
-      if (userRole === 'fundador' || userRole === 'supervisor') {
+      if (userRole === 'ceo' || userRole === 'supervisor') {
         const addBtn = document.getElementById('btn-add-truck');
         if (addBtn) addBtn.style.display = 'flex';
       }
@@ -531,10 +566,10 @@
         // Buscar utilizadores e entregas em paralelo
         const usersRes = await fetch(`${apiUrl}/users?company=${encodeURIComponent(user.company)}`);
         const users = await usersRes.json();
-        
+
         const deliveriesRes = await fetch(`${apiUrl}/deliveries?company=${encodeURIComponent(user.company)}`);
         const deliveries = await deliveriesRes.json();
-        
+
         // Mapear utilizadores por ID
         const userMap = {};
         if (Array.isArray(users)) {
@@ -542,7 +577,7 @@
             userMap[u.id] = u.name;
           });
         }
-        
+
         // Mapear entregas por truck_id
         const deliveryMap = {};
         if (Array.isArray(deliveries)) {
@@ -558,7 +593,7 @@
 
         trucks.forEach(truck => {
           const tr = document.createElement('tr');
-          
+
           let driverName = '<span style="opacity: 0.6">Nenhum</span>';
           if (truck.assigned_to && userMap[truck.assigned_to]) {
             driverName = userMap[truck.assigned_to];
@@ -634,8 +669,15 @@
     document.getElementById('form-truck').addEventListener('submit', async (e) => {
       e.preventDefault();
 
+      // Limpar estado de erro anterior
+      const plateInput = document.getElementById('plate');
+      plateInput.style.borderColor = '';
+      plateInput.style.boxShadow = '';
+      const existingError = document.getElementById('plate-error');
+      if (existingError) existingError.remove();
+
       const truckData = {
-        plate: document.getElementById('plate').value,
+        plate: plateInput.value,
         model: document.getElementById('model').value,
         mileage: document.getElementById('mileage').value,
         createdBy: user.id
@@ -662,6 +704,27 @@
           modal.style.display = "none";
           document.getElementById('form-truck').reset();
           loadTrucks();
+        } else if (response.status === 409) {
+          // Matrícula duplicada — destacar campo visualmente
+          plateInput.style.borderColor = '#ef4444';
+          plateInput.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.25)';
+          plateInput.classList.add('plate-shake');
+          setTimeout(() => plateInput.classList.remove('plate-shake'), 500);
+
+          const errMsg = document.createElement('p');
+          errMsg.id = 'plate-error';
+          errMsg.textContent = result.message;
+          errMsg.style.cssText = 'color:#f87171;font-size:13px;margin-top:6px;margin-bottom:0;';
+          plateInput.parentNode.appendChild(errMsg);
+
+          Swal.fire({
+            title: 'Matrícula duplicada',
+            text: result.message,
+            icon: 'error',
+            background: '#1e293b',
+            color: '#fff',
+            confirmButtonColor: '#667eea'
+          });
         } else {
           Swal.fire({
             title: 'Erro',
@@ -676,6 +739,7 @@
       }
     });
 
+
     loadTrucks();
     lucide.createIcons();
 
@@ -683,7 +747,7 @@
     let currentTruckForMaintenance = null;
 
     // Função para abrir modal de manutenção
-    window.openMaintenanceModal = function(truckId) {
+    window.openMaintenanceModal = function (truckId) {
       currentTruckForMaintenance = truckId;
       const modal = document.getElementById('modal-maintenance');
       if (modal) {
@@ -692,7 +756,7 @@
     };
 
     // Função para fechar modal de manutenção
-    window.closeMaintenance = function() {
+    window.closeMaintenance = function () {
       const modal = document.getElementById('modal-maintenance');
       if (modal) {
         modal.style.display = 'none';
@@ -701,7 +765,7 @@
     };
 
     // Função para confirmar manutenção concluída (Sim → fica disponível)
-    window.confirmMaintenance = async function() {
+    window.confirmMaintenance = async function () {
       if (!currentTruckForMaintenance) {
         Swal.fire('Erro', 'Nenhum camião selecionado', 'error');
         return;
@@ -720,7 +784,7 @@
         }
 
         Swal.fire({
-          title: '✅ Manutenção Realizada!',
+          title: 'Manutenção Realizada!',
           text: 'O camião está agora disponível.',
           icon: 'success',
           background: '#1e293b',
@@ -737,7 +801,7 @@
     };
 
     // Função para recusar manutenção (Não → fica em manutenção e bloqueado)
-    window.declineMaintenance = async function() {
+    window.declineMaintenance = async function () {
       if (!currentTruckForMaintenance) {
         closeMaintenance();
         return;

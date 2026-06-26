@@ -62,9 +62,18 @@ app.get(/^\/([\w\-]+\.html)$/, (req, res, next) => {
 app.post("/register", async (req, res) => {
   const { name, password, company } = req.body;
 
-  // Validação básica
+  // Validação detalhada
   if (!name || !password || !company) {
     return res.status(400).json({ message: "Preencha todos os campos." });
+  }
+  if (name.trim().length < 2 || name.trim().length > 100) {
+    return res.status(400).json({ message: "O nome deve ter entre 2 e 100 caracteres." });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ message: "A palavra-passe deve ter no mínimo 6 caracteres." });
+  }
+  if (company.trim().length < 2 || company.trim().length > 100) {
+    return res.status(400).json({ message: "O nome da empresa deve ter entre 2 e 100 caracteres." });
   }
 
   try {
@@ -89,7 +98,7 @@ app.post("/register", async (req, res) => {
         name: name,
         password: hashedPassword,
         company: company,
-        role: "fundador",
+        role: "CEO",
         created_at: new Date().toISOString()
       },
     ]);
@@ -191,8 +200,8 @@ app.post("/create-user", async (req, res) => {
     .eq("id", createdBy)
     .single();
 
-  if (!creator || creator.role !== "fundador") {
-    return res.status(403).json({ message: "Apenas fundadores podem criar novos usuários." });
+  if (!creator || creator.role !== "CEO") {
+    return res.status(403).json({ message: "Apenas CEOs podem criar novos usuários." });
   }
 
   try {
@@ -239,8 +248,8 @@ app.put("/update-user/:id", async (req, res) => {
     .eq("id", updatedBy)
     .single();
 
-  if (!updater || updater.role !== "fundador") {
-    return res.status(403).json({ message: "Apenas fundadores podem atualizar usuários." });
+  if (!updater || updater.role !== "CEO") {
+    return res.status(403).json({ message: "Apenas CEOs podem atualizar usuários." });
   }
 
   try {
@@ -258,7 +267,7 @@ app.put("/update-user/:id", async (req, res) => {
       return res.status(403).json({ message: "Sem permissão para atualizar este usuário." });
     }
 
-    // Fundadores podem atualizar qualquer utilizador, incluindo outros fundadores
+    // CEOs podem atualizar qualquer utilizador, incluindo outros CEOs
     // (Restrição removida para permitir gestão completa)
 
     const updateData = {
@@ -316,8 +325,8 @@ app.delete("/delete-user/:id", async (req, res) => {
     }
 
     // Trabalhadores não podem eliminar ninguém
-    if (deleter.role === "trabalhador") {
-      console.log('[DELETE USER] ERRO: Trabalhador tentou eliminar');
+    if (deleter.role === "camionista") {
+      console.log('[DELETE USER] ERRO: Camionista tentou eliminar');
       return res.status(403).json({
         message: "Trabalhadores não têm permissão para eliminar utilizadores."
       });
@@ -340,12 +349,12 @@ app.delete("/delete-user/:id", async (req, res) => {
     }
 
     // REGRAS DE PERMISSÃO:
-    // - Fundadores podem eliminar TODOS (fundadores, supervisores, trabalhadores)
-    // - Supervisores podem eliminar APENAS trabalhadores
+    // - CEOs podem eliminar TODOS (CEOs, supervisores, camionistas)
+    // - Supervisores podem eliminar APENAS camionistas
 
     if (deleter.role === "supervisor") {
       // Supervisores só podem eliminar trabalhadores
-      if (deletedUser.role !== "trabalhador") {
+      if (deletedUser.role !== "camionista") {
         console.log('[DELETE USER] ERRO: Supervisor tentou eliminar não-trabalhador');
         return res.status(403).json({
           message: "Supervisores só podem eliminar trabalhadores."
@@ -353,7 +362,7 @@ app.delete("/delete-user/:id", async (req, res) => {
       }
     }
 
-    // Se chegou aqui, é fundador ou supervisor eliminando trabalhador - permitido!
+    // Se chegou aqui, é CEO ou supervisor eliminando camionista - permitido!
     console.log('[DELETE USER] Permissões OK, executando delete...');
 
     const { error } = await supabase
@@ -370,6 +379,65 @@ app.delete("/delete-user/:id", async (req, res) => {
     res.json({ message: "Usuário excluído com sucesso!" });
   } catch (err) {
     res.status(500).json({ message: "Erro ao excluir usuário: " + err.message });
+  }
+});
+
+
+// ===============================
+// Eliminar empresa (apenas CEO)
+// ===============================
+
+app.delete("/delete-company", async (req, res) => {
+  const { userId, company } = req.body;
+
+  if (!userId || !company) {
+    return res.status(400).json({ message: "Dados em falta." });
+  }
+
+  try {
+    // Verificar que o utilizador é CEO e pertence à empresa
+    const { data: requester } = await supabase
+      .from("users")
+      .select("role, company")
+      .eq("id", userId)
+      .single();
+
+    if (!requester || requester.role !== "CEO") {
+      return res.status(403).json({ message: "Sem permissão para eliminar a empresa." });
+    }
+
+    if (requester.company !== company) {
+      return res.status(403).json({ message: "Não podes eliminar uma empresa que não é a tua." });
+    }
+
+    console.log(`[DELETE COMPANY] CEO userId=${userId} a eliminar empresa "${company}"`);
+
+    // Eliminar entregas
+    const { error: delDeliveries } = await supabase
+      .from("deliveries")
+      .delete()
+      .eq("company", company);
+    if (delDeliveries) throw delDeliveries;
+
+    // Eliminar camiões
+    const { error: delTrucks } = await supabase
+      .from("trucks")
+      .delete()
+      .eq("company", company);
+    if (delTrucks) throw delTrucks;
+
+    // Eliminar todos os utilizadores da empresa
+    const { error: delUsers } = await supabase
+      .from("users")
+      .delete()
+      .eq("company", company);
+    if (delUsers) throw delUsers;
+
+    console.log(`[DELETE COMPANY] Empresa "${company}" eliminada com sucesso.`);
+    res.json({ message: `Empresa "${company}" e todos os dados associados foram eliminados.` });
+  } catch (err) {
+    console.error("[DELETE COMPANY] Erro:", err);
+    res.status(500).json({ message: "Erro ao eliminar empresa: " + err.message });
   }
 });
 
@@ -419,7 +487,7 @@ app.get("/deliveries", async (req, res) => {
 });
 
 app.post("/create-delivery", validateDelivery, async (req, res) => {
-  const { tipo, origem, destino, estado, dataPrevista, observacoes, createdBy } = req.body;
+  const { tipo, origem, destino, estado, dataPrevista, dataSaida, observacoes, createdBy } = req.body;
 
   console.log(`[CREATE DELIVERY] Início: createdBy=${createdBy}`);
 
@@ -430,7 +498,7 @@ app.post("/create-delivery", validateDelivery, async (req, res) => {
       .eq("id", createdBy)
       .single();
 
-    if (!creator || (creator.role !== "fundador" && creator.role !== "supervisor")) {
+    if (!creator || (creator.role !== "CEO" && creator.role !== "supervisor")) {
       console.log(`[CREATE DELIVERY] Erro: Creator not found or no permission. Creator:`, creator);
       return res.status(403).json({ message: "Sem permissão para criar entregas." });
     }
@@ -447,7 +515,8 @@ app.post("/create-delivery", validateDelivery, async (req, res) => {
         origem,
         destino,
         estado: estado || "pendente",
-        data_prevista: dataPrevista,
+        data_prevista: dataPrevista || null,
+        data_saida: dataSaida || null,
         observacoes,
         company: creator.company || "CamiGest",
         created_by: createdBy,
@@ -460,7 +529,7 @@ app.post("/create-delivery", validateDelivery, async (req, res) => {
       throw error;
     }
 
-    res.json({ message: "Entrega criada com sucesso!" });
+    res.json({ message: "A entrega foi criada com êxito." });
   } catch (err) {
     console.error('[CREATE DELIVERY] Erro no catch:', err);
     res.status(500).json({ message: "Erro ao criar entrega: " + err.message });
@@ -485,7 +554,7 @@ app.get("/deliveries/:id", async (req, res) => {
 });
 
 app.put("/update-delivery/:id", validateDelivery, async (req, res) => {
-  const { tipo, origem, destino, estado, dataPrevista, observacoes, updatedBy } = req.body;
+  const { tipo, origem, destino, estado, dataPrevista, dataSaida, observacoes, updatedBy } = req.body;
   const deliveryId = req.params.id;
 
   try {
@@ -495,7 +564,7 @@ app.put("/update-delivery/:id", validateDelivery, async (req, res) => {
       .eq("id", updatedBy)
       .single();
 
-    if (!updater || (updater.role !== "fundador" && updater.role !== "supervisor")) {
+    if (!updater || (updater.role !== "CEO" && updater.role !== "supervisor")) {
       return res.status(403).json({ message: "Sem permissão para atualizar entregas." });
     }
 
@@ -504,7 +573,8 @@ app.put("/update-delivery/:id", validateDelivery, async (req, res) => {
       origem,
       destino,
       estado,
-      data_prevista: dataPrevista,
+      data_prevista: dataPrevista || null,
+      data_saida: dataSaida || null,
       observacoes,
       updated_at: new Date().toISOString()
     };
@@ -533,7 +603,7 @@ app.delete("/delete-delivery/:id", async (req, res) => {
       .eq("id", deletedBy)
       .single();
 
-    if (!deleter || (deleter.role !== "fundador" && deleter.role !== "supervisor")) {
+    if (!deleter || (deleter.role !== "CEO" && deleter.role !== "supervisor")) {
       return res.status(403).json({ message: "Sem permissão para eliminar entregas." });
     }
 
@@ -560,21 +630,35 @@ app.post("/create-truck", validateTruck, async (req, res) => {
       .eq("id", createdBy)
       .single();
 
-    if (!creator || (creator.role !== "fundador" && creator.role !== "supervisor")) {
+    if (!creator || (creator.role !== "CEO" && creator.role !== "supervisor")) {
       return res.status(403).json({ message: "Sem permissão para adicionar camiões." });
+    }
+
+    // Normalizar matrícula (maiúsculas, sem espaços extra)
+    const normalizedPlate = (plate || "").trim().toUpperCase();
+
+    // Verificar se já existe um camião com a mesma matrícula na empresa
+    // Usar .maybeSingle() que retorna null sem erro quando não há resultados
+    const { data: existingTruck } = await supabase
+      .from("trucks")
+      .select("id")
+      .ilike("plate", normalizedPlate)
+      .eq("company", creator.company)
+      .maybeSingle();
+
+    if (existingTruck) {
+      return res.status(409).json({
+        message: `A matrícula ${normalizedPlate} já se encontra registada na frota. Por favor, verifique e tente novamente.`
+      });
     }
 
     const initialMileage = Number(mileage);
     const initialMileageSinceMaintenance = initialMileage % 20000;
-    const initialStatus = initialMileage >= 20000 && initialMileageSinceMaintenance === 0
-      ? "manutencao"
-      : (initialMileage >= 20000 ? "manutencao" : "disponivel");
-    // Se a quilometragem inicial já passou de 20000, colocar em manutenção
     const needsMaintenanceOnCreate = initialMileage >= 20000;
 
     const { error } = await supabase.from("trucks").insert([
       {
-        plate,
+        plate: normalizedPlate,
         model,
         mileage: initialMileage,
         mileage_since_maintenance: initialMileageSinceMaintenance,
@@ -593,12 +677,30 @@ app.post("/create-truck", validateTruck, async (req, res) => {
     res.json({ message: "Camião adicionado com sucesso!" });
   } catch (err) {
     console.error('[CREATE TRUCK] Erro:', err);
-    res.status(500).json({ message: "Erro ao adicionar camião: " + err.message });
+
+    // Intercectar erro de constraint única da base de dados (código Postgres 23505)
+    if (err.code === "23505" || (err.message && err.message.includes("unique constraint"))) {
+      return res.status(409).json({
+        message: "Esta matrícula já se encontra registada na frota. Por favor, verifique e tente novamente."
+      });
+    }
+
+    res.status(500).json({ message: "Ocorreu um erro ao registar o camião. Por favor, tente novamente." });
   }
 });
 
+
+
 app.post("/request-delivery", async (req, res) => {
   const { deliveryId, truckId, workerId } = req.body;
+
+  // Validação de campos obrigatórios
+  if (!deliveryId || !truckId || !workerId) {
+    return res.status(400).json({ message: "deliveryId, truckId e workerId são obrigatórios." });
+  }
+  if (!Number.isInteger(Number(deliveryId)) || !Number.isInteger(Number(truckId)) || !Number.isInteger(Number(workerId))) {
+    return res.status(400).json({ message: "IDs inválidos." });
+  }
 
   try {
     const { data: worker } = await supabase
@@ -607,8 +709,8 @@ app.post("/request-delivery", async (req, res) => {
       .eq("id", workerId)
       .single();
 
-    if (!worker || worker.role !== "trabalhador") {
-      return res.status(403).json({ message: "Apenas trabalhadores podem solicitar entregas." });
+    if (!worker || worker.role !== "camionista") {
+      return res.status(403).json({ message: "Apenas camionistas podem solicitar entregas." });
     }
 
     const { data: truck } = await supabase
@@ -673,6 +775,14 @@ app.get("/pending-requests", async (req, res) => {
 app.post("/respond-request", async (req, res) => {
   const { requestId, approved, responderId } = req.body;
 
+  // Validação de campos
+  if (requestId === undefined || requestId === null || approved === undefined || !responderId) {
+    return res.status(400).json({ message: "requestId, approved e responderId são obrigatórios." });
+  }
+  if (typeof approved !== 'boolean') {
+    return res.status(400).json({ message: "O campo 'approved' deve ser boolean." });
+  }
+
   try {
     const { data: responder } = await supabase
       .from("users")
@@ -680,7 +790,7 @@ app.post("/respond-request", async (req, res) => {
       .eq("id", responderId)
       .single();
 
-    if (!responder || (responder.role !== "fundador" && responder.role !== "supervisor")) {
+    if (!responder || (responder.role !== "CEO" && responder.role !== "supervisor")) {
       return res.status(403).json({ message: "Sem permissão para responder solicitações." });
     }
 
@@ -730,7 +840,7 @@ app.post("/respond-request", async (req, res) => {
     }
 
     res.json({
-      message: approved ? "Solicitação aprovada com sucesso!" : "Solicitação rejeitada."
+      message: approved ? "A solicitação foi aprovada com êxito." : "A solicitação foi rejeitada."
     });
   } catch (err) {
     res.status(500).json({ message: "Erro ao processar solicitação: " + err.message });
@@ -741,20 +851,19 @@ app.post("/complete-delivery", async (req, res) => {
   const { deliveryId, truckId, finalMileage, workerId } = req.body;
 
   try {
-    // Validação básica
-    if (!deliveryId || !finalMileage) {
+    // Validação de campos
+    if (!deliveryId || finalMileage === undefined || finalMileage === null) {
       return res.status(400).json({ message: "Faltam parâmetros obrigatórios." });
     }
+    const mileageNum = Number(finalMileage);
+    if (!Number.isFinite(mileageNum) || mileageNum < 0) {
+      return res.status(400).json({ message: "A quilometragem final deve ser um número positivo." });
+    }
+    if (mileageNum > 9_999_999) {
+      return res.status(400).json({ message: "Quilometragem final inválida (valor demasiado alto)." });
+    }
 
-    // Atualizar entrega
-    const { error: deliveryError } = await supabase
-      .from("deliveries")
-      .update({
-        estado: "concluido"
-      })
-      .eq("id", parseInt(deliveryId));
-
-    if (deliveryError) throw deliveryError;
+    // Atualizar camião (se fornecido) e depois apagar a entrega da BD
 
     // Se houver truckId, atualizar camião
     if (truckId) {
@@ -804,13 +913,38 @@ app.post("/complete-delivery", async (req, res) => {
         console.error("[COMPLETE DELIVERY] Erro ao atualizar camião:", truckError);
       }
 
+      // Se o camião precisa de manutenção, vamos sinalizar isso depois de apagar a entrega
+      const maintenanceFlag = needsMaintenance;
+
+      // Apagar a entrega da base de dados (já concluída)
+      const { error: deleteError } = await supabase
+        .from("deliveries")
+        .delete()
+        .eq("id", parseInt(deliveryId));
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
       // Informar o frontend se o camião precisa de manutenção
-      if (needsMaintenance) {
+      if (maintenanceFlag) {
         return res.json({
           message: "Entrega finalizada com sucesso!",
           maintenanceRequired: true,
           truckId: parseInt(truckId)
         });
+      }
+    }
+
+    // Se não houve camião associado, apenas apagar a entrega
+    if (!truckId) {
+      const { error: deleteError } = await supabase
+        .from("deliveries")
+        .delete()
+        .eq("id", parseInt(deliveryId));
+
+      if (deleteError) {
+        throw deleteError;
       }
     }
 
@@ -889,7 +1023,7 @@ app.get("/stats/worker/:workerId", async (req, res) => {
   try {
     // Nota: Como 'assigned_to' está em falta na tabela 'deliveries', 
     // usamos 'created_by' ou filtramos no código se necessário.
-    // Por agora, assumimos que 'created_by' identifica o trabalhador para as estatísticas.
+    // Por agora, assumimos que 'created_by' identifica o camionista para as estatísticas.
     const { data: completed } = await supabase
       .from("deliveries")
       .select("*")
@@ -1048,6 +1182,14 @@ app.get("/truck-history/:id", async (req, res) => {
 app.post("/update-truck-status", async (req, res) => {
   const { truckId, status, updatedBy } = req.body;
 
+  const VALID_STATUSES = ['disponivel', 'em_uso', 'manutencao'];
+  if (!truckId || !status || !updatedBy) {
+    return res.status(400).json({ message: "truckId, status e updatedBy são obrigatórios." });
+  }
+  if (!VALID_STATUSES.includes(status)) {
+    return res.status(400).json({ message: `Estado inválido. Valores aceites: ${VALID_STATUSES.join(', ')}.` });
+  }
+
   try {
     const { data: user } = await supabase
       .from("users")
@@ -1055,7 +1197,7 @@ app.post("/update-truck-status", async (req, res) => {
       .eq("id", updatedBy)
       .single();
 
-    if (!user || (user.role !== "fundador" && user.role !== "supervisor")) {
+    if (!user || (user.role !== "CEO" && user.role !== "supervisor")) {
       return res.status(403).json({ message: "Sem permissão para atualizar status." });
     }
 
@@ -1091,6 +1233,17 @@ app.post("/update-truck-status", async (req, res) => {
 app.put("/update-truck-mileage", async (req, res) => {
   const { truckId, mileage, updatedBy } = req.body;
 
+  if (!truckId || mileage === undefined || mileage === null || !updatedBy) {
+    return res.status(400).json({ message: "truckId, mileage e updatedBy são obrigatórios." });
+  }
+  const mileageNum = Number(mileage);
+  if (!Number.isFinite(mileageNum) || mileageNum < 0) {
+    return res.status(400).json({ message: "A quilometragem deve ser um número positivo." });
+  }
+  if (mileageNum > 9_999_999) {
+    return res.status(400).json({ message: "Quilometragem inválida (valor demasiado alto)." });
+  }
+
   try {
     const { data: user } = await supabase
       .from("users")
@@ -1098,7 +1251,7 @@ app.put("/update-truck-mileage", async (req, res) => {
       .eq("id", updatedBy)
       .single();
 
-    if (!user || (user.role !== "fundador" && user.role !== "supervisor")) {
+    if (!user || (user.role !== "CEO" && user.role !== "supervisor")) {
       return res.status(403).json({ message: "Sem permissão para atualizar km." });
     }
 
@@ -1187,6 +1340,64 @@ async function getCompanyDeliveriesChartData(company) {
 }
 
 // ===============================
+// Atualizar nome do próprio utilizador
+// ===============================
+
+app.put("/update-own-name", async (req, res) => {
+  const { userId, newName } = req.body;
+
+  if (!userId || !newName) {
+    return res.status(400).json({ message: "Dados em falta." });
+  }
+
+  const trimmedName = newName.trim();
+  if (trimmedName.length < 2 || trimmedName.length > 100) {
+    return res.status(400).json({ message: "O nome deve ter entre 2 e 100 caracteres." });
+  }
+
+  try {
+    const { data: user } = await supabase
+      .from("users")
+      .select("name, company")
+      .eq("id", userId)
+      .single();
+
+    if (!user) {
+      return res.status(404).json({ message: "Utilizador não encontrado." });
+    }
+
+    if (user.name.trim().toLowerCase() === trimmedName.toLowerCase()) {
+      return res.status(400).json({ message: "O novo nome é igual ao nome atual." });
+    }
+
+    // Verificar se já existe outro utilizador com o mesmo nome na mesma empresa
+    const { data: existing } = await supabase
+      .from("users")
+      .select("id")
+      .eq("name", trimmedName)
+      .eq("company", user.company)
+      .neq("id", userId)
+      .maybeSingle();
+
+    if (existing) {
+      return res.status(409).json({ message: "Já existe um utilizador com este nome na empresa." });
+    }
+
+    const { error } = await supabase
+      .from("users")
+      .update({ name: trimmedName })
+      .eq("id", userId);
+
+    if (error) throw error;
+
+    console.log(`[UPDATE OWN NAME] userId=${userId} alterou nome para "${trimmedName}"`);
+    res.json({ message: "Nome atualizado com sucesso!", newName: trimmedName });
+  } catch (err) {
+    res.status(500).json({ message: "Erro ao atualizar nome: " + err.message });
+  }
+});
+
+// ===============================
 // Atualizar palavra-passe do próprio utilizador
 // ===============================
 
@@ -1196,8 +1407,36 @@ app.post("/update-password", async (req, res) => {
   if (!userId || !newPassword) {
     return res.status(400).json({ message: "Dados em falta." });
   }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ message: "A nova palavra-passe deve ter no mínimo 6 caracteres." });
+  }
+  if (newPassword.length > 128) {
+    return res.status(400).json({ message: "A palavra-passe não pode ter mais de 128 caracteres." });
+  }
 
   try {
+    // Fetch current user password
+    const { data: user } = await supabase
+      .from("users")
+      .select("password")
+      .eq("id", userId)
+      .single();
+
+    console.log('DEBUG - User from DB:', { userId, hasPassword: !!user?.password });
+
+    if (!user) {
+      return res.status(404).json({ message: "Utilizador não encontrado." });
+    }
+
+    // Check if new password is same as current
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    console.log('DEBUG - Password comparison:', { newPassword: newPassword.substring(0, 3) + '***', isSamePassword });
+
+    if (isSamePassword) {
+      console.log('DEBUG - Rejecting: same password');
+      return res.status(400).json({ message: "A nova palavra-passe é igual à atual. Introduza uma palavra-passe diferente." });
+    }
+
     const hashed = await bcrypt.hash(newPassword, 10);
 
     const { error } = await supabase
@@ -1206,9 +1445,78 @@ app.post("/update-password", async (req, res) => {
       .eq("id", userId);
     if (error) throw error;
 
+    console.log('DEBUG - Password updated successfully');
     res.json({ message: "Palavra-passe atualizada com sucesso!" });
   } catch (err) {
+    console.error('DEBUG - Error:', err.message);
     res.status(500).json({ message: "Erro ao atualizar palavra-passe: " + err.message });
+  }
+});
+
+// Alterar nome da empresa (apenas CEO)
+app.put("/update-company", async (req, res) => {
+  const { newCompanyName, updatedBy } = req.body;
+
+  if (!newCompanyName || !updatedBy) {
+    return res.status(400).json({ message: "Dados em falta." });
+  }
+
+  const trimmedName = newCompanyName.trim();
+  if (trimmedName.length < 2 || trimmedName.length > 100) {
+    return res.status(400).json({ message: "O nome da empresa deve ter entre 2 e 100 caracteres." });
+  }
+
+  try {
+    // Verificar se quem faz o pedido é CEO
+    const { data: requester } = await supabase
+      .from("users")
+      .select("role, company")
+      .eq("id", updatedBy)
+      .single();
+
+    if (!requester || requester.role !== "CEO") {
+      return res.status(403).json({ message: "Apenas o CEO pode alterar o nome da empresa." });
+    }
+
+    const oldCompany = requester.company;
+
+    if (oldCompany.trim().toLowerCase() === trimmedName.toLowerCase()) {
+      return res.status(400).json({ message: "O novo nome é igual ao nome atual." });
+    }
+
+    // Atualizar todos os utilizadores da empresa
+    const { error: usersError } = await supabase
+      .from("users")
+      .update({ company: trimmedName })
+      .eq("company", oldCompany);
+
+    if (usersError) throw usersError;
+
+    // Atualizar todas as entregas da empresa
+    const { error: deliveriesError } = await supabase
+      .from("deliveries")
+      .update({ company: trimmedName })
+      .ilike("company", oldCompany);
+
+    if (deliveriesError) throw deliveriesError;
+
+    // Atualizar todos os camiões da empresa
+    const { error: trucksError } = await supabase
+      .from("trucks")
+      .update({ company: trimmedName })
+      .ilike("company", oldCompany);
+
+    if (trucksError) throw trucksError;
+
+    console.log(`[UPDATE COMPANY] "${oldCompany}" → "${trimmedName}" por userId=${updatedBy}`);
+
+    res.json({
+      message: `Nome da empresa atualizado com sucesso!`,
+      newCompanyName: trimmedName
+    });
+  } catch (err) {
+    console.error("[UPDATE COMPANY] Erro:", err.message);
+    res.status(500).json({ message: "Erro ao atualizar nome da empresa: " + err.message });
   }
 });
 
