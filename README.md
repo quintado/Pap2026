@@ -100,23 +100,10 @@ npm start
 
 ---
 
-## 📸 Capturas de Ecrã
-
-Adiciona aqui imagens da aplicação.
-
-```text
-/docs/images/dashboard.png
-/docs/images/login.png
-/docs/images/vehicles.png
-```
-
----
-
 ## 📚 Documentação
 
 * Manual do Utilizador
 * Manual do Programador
-* Documentação da API
 
 ---
 
@@ -132,6 +119,6 @@ Adiciona aqui imagens da aplicação.
 
 ## 👨‍💻 Autor
 
-**Gui Quintas**
+**Guilherme Quintao**
 
-Projeto desenvolvido no âmbito da PAP / Estágio.
+Projeto desenvolvido no âmbito da PAP.
