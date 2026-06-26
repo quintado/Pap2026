@@ -1,0 +1,336 @@
+/* ==========================================================
+   CamiGest – Responsive Layout (shared across all pages)
+   Breakpoints:
+     ≤ 480px  → mobile small
+     ≤ 768px  → mobile / tablet portrait
+     ≤ 1024px → tablet landscape
+   ========================================================== */
+
+/* ── Hamburger Button ── */
+.hamburger-btn {
+  display: none;
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 1100;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
+  color: #fff;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+  align-items: center;
+  justify-content: center;
+}
+
+.hamburger-btn:hover {
+  background: rgba(37, 99, 235, 0.25);
+  border-color: rgba(37, 99, 235, 0.4);
+}
+
+/* ── Sidebar Overlay ── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── Mobile Bottom Navigation ── */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 1050;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px;
+}
+
+.bottom-nav a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted, #9ca3af);
+  text-decoration: none;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  min-width: 56px;
+}
+
+.bottom-nav a svg {
+  width: 20px;
+  height: 20px;
+}
+
+.bottom-nav a:hover,
+.bottom-nav a.active {
+  color: #3b82f6;
+  background: rgba(37, 99, 235, 0.12);
+}
+
+/* ── Tablet: Narrow Sidebar ── */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 220px !important;
+  }
+
+  .main {
+    margin-left: 220px !important;
+    padding: 24px !important;
+  }
+}
+
+/* ── Mobile: Slide-in Sidebar + Hamburger ── */
+@media (max-width: 768px) {
+
+  /* Show hamburger */
+  .hamburger-btn {
+    display: flex;
+  }
+
+  /* Show overlay */
+  .sidebar-overlay {
+    display: block;
+  }
+
+  /* Show bottom nav */
+  .bottom-nav {
+    display: flex;
+  }
+
+  /* Sidebar hidden by default, slides in */
+  .sidebar {
+    transform: translateX(-100%) !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    width: 260px !important;
+    z-index: 1000 !important;
+  }
+
+  .sidebar.open {
+    transform: translateX(0) !important;
+  }
+
+  /* Main content full width, extra top padding for hamburger */
+  .main {
+    margin-left: 0 !important;
+    padding: 16px !important;
+    padding-top: 68px !important;
+    padding-bottom: 80px !important; /* space for bottom nav */
+  }
+
+  /* ── Header ── */
+  header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    padding: 16px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .header-left h1 {
+    font-size: 20px !important;
+  }
+
+  #datetime {
+    font-size: 12px !important;
+    align-self: flex-start !important;
+  }
+
+  /* ── Stats / Cards Grid ── */
+  .cards {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+  }
+
+  .card {
+    padding: 16px !important;
+  }
+
+  .card p {
+    font-size: 24px !important;
+  }
+
+  /* ── Tables ── */
+  .table-container,
+  .table-responsive {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 600px;
+  }
+
+  th, td {
+    padding: 10px 8px !important;
+    font-size: 13px !important;
+  }
+
+  /* ── Modals ── */
+  .modal-content {
+    width: 92% !important;
+    margin: 8% auto !important;
+    padding: 20px !important;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+
+  /* ── Filters ── */
+  .filters-section {
+    flex-direction: column !important;
+    gap: 10px !important;
+    padding: 14px !important;
+  }
+
+  .filter-group {
+    min-width: 100% !important;
+  }
+
+  /* ── Header section (page titles) ── */
+  .header-section {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .header-section h1 {
+    font-size: 20px !important;
+    margin-bottom: 0 !important;
+  }
+
+  h1 {
+    font-size: 20px !important;
+    margin-bottom: 20px !important;
+  }
+
+  /* ── Chart ── */
+  .chart-container {
+    padding: 16px !important;
+  }
+
+  canvas {
+    height: 220px !important;
+  }
+
+  /* ── Notification dropdown ── */
+  .notification-dropdown {
+    width: calc(100vw - 32px) !important;
+    right: -8px !important;
+  }
+
+  /* ── Form footer buttons ── */
+  .form-footer {
+    flex-direction: column !important;
+  }
+
+  .form-footer button {
+    width: 100% !important;
+  }
+
+  /* ── Action buttons ── */
+  .add-btn span.btn-text {
+    display: none;
+  }
+
+  /* ── Config / settings tabs ── */
+  .settings-tabs,
+  .tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap !important;
+  }
+
+  /* ── Calendar ── */
+  .calendar-grid {
+    font-size: 12px !important;
+  }
+
+  .calendar-header {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+}
+
+/* ── Small Mobile ── */
+@media (max-width: 480px) {
+  .main {
+    padding: 12px !important;
+    padding-top: 64px !important;
+    padding-bottom: 76px !important;
+  }
+
+  .cards {
+    grid-template-columns: 1fr !important;
+  }
+
+  .card {
+    padding: 14px !important;
+  }
+
+  header {
+    padding: 12px !important;
+  }
+
+  .header-left h1 {
+    font-size: 18px !important;
+  }
+
+  .modal-content {
+    width: 96% !important;
+    margin: 4% auto !important;
+    padding: 16px !important;
+  }
+
+  h1 {
+    font-size: 18px !important;
+  }
+
+  /* Bottom nav labels hidden on very small screens */
+  .bottom-nav a span {
+    display: none;
+  }
+
+  .bottom-nav a {
+    min-width: 44px;
+    padding: 8px;
+  }
+}
+
+/* ── Utility: hide on mobile ── */
+.hide-mobile {
+  display: none !important;
+}
+
+@media (min-width: 769px) {
+  .hide-mobile {
+    display: initial !important;
+  }
+
+  .show-mobile-only {
+    display: none !important;
+  }
+}

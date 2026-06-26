@@ -285,6 +285,36 @@
         transform: translate(-50%, -50%) rotate(360deg);
       }
     }
+
+    /* Mobile responsive */
+    @media (max-width: 480px) {
+      body { padding: 12px; }
+
+      .register-card {
+        padding: 28px 20px;
+        border-radius: 20px;
+      }
+
+      .logo h1 { font-size: 28px; }
+      .logo { margin-bottom: 24px; }
+
+      .input-wrapper input {
+        padding: 11px 14px 11px 40px;
+        font-size: 14px;
+      }
+
+      .btn-register {
+        padding: 13px;
+        font-size: 15px;
+      }
+
+      .btn-back { padding: 11px; }
+      .form-group { margin-bottom: 16px; }
+      .divider { margin: 18px 0; }
+
+      .particle:nth-child(2),
+      .particle:nth-child(3) { display: none; }
+    }
   </style>
 </head>
 

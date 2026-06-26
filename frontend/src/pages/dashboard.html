@@ -12,6 +12,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="css/modern-design.css">
+  <link rel="stylesheet" href="css/responsive.css">
   <style>
     body {
       display: flex;
@@ -285,26 +286,7 @@
       }
     }
 
-    @media (max-width: 1024px) {
-      .sidebar {
-        width: 220px;
-      }
-
-      .main {
-        margin-left: 220px;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .sidebar {
-        transform: translateX(-100%);
-      }
-
-      .main {
-        margin-left: 0;
-        padding: 20px;
-      }
-    }
+    /* Responsive handled by responsive.css */
 
     /* Loading skeleton for stat cards */
     .card p.loading {
@@ -334,6 +316,12 @@
 </head>
 
 <body>
+  <!-- Hamburger button -->
+  <button class="hamburger-btn" id="hamburgerBtn" aria-label="Abrir menu">
+    <i data-lucide="menu" style="width:22px;height:22px;"></i>
+  </button>
+  <!-- Sidebar overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
   <nav class="sidebar">
     <div class="sidebar-logo">
       <h2><i data-lucide="truck"
@@ -388,6 +376,30 @@
       <canvas id="weeklyChart"></canvas>
     </div>
   </div>
+
+  <!-- Bottom Navigation (mobile) -->
+  <nav class="bottom-nav">
+    <a href="dashboard.html" class="active">
+      <i data-lucide="layout-dashboard"></i>
+      <span>Dashboard</span>
+    </a>
+    <a href="entregas.html">
+      <i data-lucide="package"></i>
+      <span>Entregas</span>
+    </a>
+    <a href="camioes.html">
+      <i data-lucide="truck"></i>
+      <span>Camiões</span>
+    </a>
+    <a href="calendario.html">
+      <i data-lucide="calendar"></i>
+      <span>Calendário</span>
+    </a>
+    <a href="config.html">
+      <i data-lucide="settings"></i>
+      <span>Config</span>
+    </a>
+  </nav>
 
   <script>
     function updateDateTime() {
@@ -544,6 +556,23 @@
 
     loadDashboardStats();
     lucide.createIcons();
+
+    // Sidebar toggle
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const sidebar = document.querySelector('.sidebar');
+    function openSidebar() {
+      sidebar.classList.add('open');
+      sidebarOverlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeSidebar() {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    hamburgerBtn.addEventListener('click', openSidebar);
+    sidebarOverlay.addEventListener('click', closeSidebar);
   </script>
 </body>
 

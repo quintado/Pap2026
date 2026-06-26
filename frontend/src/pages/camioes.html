@@ -9,6 +9,7 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="css/modern-design.css">
+  <link rel="stylesheet" href="css/responsive.css">
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     body {
@@ -367,31 +368,10 @@
     }
 
     @media (max-width: 1024px) {
-      .sidebar {
-        width: 220px;
-      }
-
-      .main {
-        margin-left: 220px;
-      }
+      .sidebar { width: 220px; }
+      .main { margin-left: 220px; }
     }
-
-    @media (max-width: 768px) {
-      .sidebar {
-        transform: translateX(-100%);
-      }
-
-      .main {
-        margin-left: 0;
-        padding: 20px;
-      }
-
-      .modal-content {
-        width: 90%;
-        margin: 20% auto;
-        padding: 24px;
-      }
-    }
+    /* Responsive layout handled by responsive.css */
 
     @keyframes plate-shake {
 
@@ -424,6 +404,12 @@
 </head>
 
 <body>
+  <!-- Hamburger button -->
+  <button class="hamburger-btn" id="hamburgerBtn" aria-label="Abrir menu">
+    <i data-lucide="menu" style="width:22px;height:22px;"></i>
+  </button>
+  <!-- Sidebar overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
   <nav class="sidebar">
     <div class="sidebar-logo">
@@ -456,7 +442,7 @@
       </button>
     </div>
 
-    <div class="table-container">
+    <div class="table-container table-responsive">
       <table id="trucks-table">
         <thead>
           <tr>
@@ -476,6 +462,30 @@
       </table>
     </div>
   </div>
+
+  <!-- Bottom Navigation (mobile) -->
+  <nav class="bottom-nav">
+    <a href="dashboard.html">
+      <i data-lucide="layout-dashboard"></i>
+      <span>Dashboard</span>
+    </a>
+    <a href="entregas.html">
+      <i data-lucide="package"></i>
+      <span>Entregas</span>
+    </a>
+    <a href="camioes.html" class="active">
+      <i data-lucide="truck"></i>
+      <span>Camiões</span>
+    </a>
+    <a href="calendario.html">
+      <i data-lucide="calendar"></i>
+      <span>Calendário</span>
+    </a>
+    <a href="config.html">
+      <i data-lucide="settings"></i>
+      <span>Config</span>
+    </a>
+  </nav>
 
   <div id="modal-truck" class="modal">
     <div class="modal-content">
@@ -742,6 +752,23 @@
 
     loadTrucks();
     lucide.createIcons();
+
+    // Sidebar toggle
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const sidebar = document.querySelector('.sidebar');
+    function openSidebar() {
+      sidebar.classList.add('open');
+      sidebarOverlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeSidebar2() {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    hamburgerBtn.addEventListener('click', openSidebar);
+    sidebarOverlay.addEventListener('click', closeSidebar2);
 
     // Variável global para rastrear o camião em manutenção
     let currentTruckForMaintenance = null;

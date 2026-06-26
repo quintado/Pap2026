@@ -259,6 +259,40 @@
         transform: translate(-50%, -50%) rotate(360deg);
       }
     }
+
+    /* Mobile responsive */
+    @media (max-width: 480px) {
+      body { padding: 16px; }
+
+      .login-card {
+        padding: 32px 24px;
+        border-radius: 20px;
+      }
+
+      .logo h1 { font-size: 32px; }
+      .logo { margin-bottom: 28px; }
+
+      .input-wrapper input {
+        padding: 12px 14px 12px 44px;
+        font-size: 14px;
+      }
+
+      .btn-login {
+        padding: 14px;
+        font-size: 15px;
+      }
+
+      .btn-register {
+        padding: 12px;
+        font-size: 14px;
+      }
+
+      .form-group { margin-bottom: 18px; }
+      .divider { margin: 24px 0; }
+
+      /* Hide large particles on mobile */
+      .particle:nth-child(3) { display: none; }
+    }
   </style>
 </head>
 
