@@ -369,15 +369,22 @@
 
     /* Mobile responsive */
     @media (max-width: 480px) {
-      body { padding: 12px; }
+      body {
+        padding: 12px;
+      }
 
       .register-card {
         padding: 28px 20px;
         border-radius: 20px;
       }
 
-      .logo h1 { font-size: 28px; }
-      .logo { margin-bottom: 24px; }
+      .logo h1 {
+        font-size: 28px;
+      }
+
+      .logo {
+        margin-bottom: 24px;
+      }
 
       .input-wrapper input {
         padding: 11px 14px 11px 40px;
@@ -389,12 +396,22 @@
         font-size: 15px;
       }
 
-      .btn-back { padding: 11px; }
-      .form-group { margin-bottom: 16px; }
-      .divider { margin: 18px 0; }
+      .btn-back {
+        padding: 11px;
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+      }
+
+      .divider {
+        margin: 18px 0;
+      }
 
       .particle:nth-child(2),
-      .particle:nth-child(3) { display: none; }
+      .particle:nth-child(3) {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -404,7 +421,8 @@
   <div id="feedbackModalBg" class="feedback-modal-bg"
     onclick="if(event.target.id==='feedbackModalBg') closeFeedbackModal()">
     <div class="feedback-modal-content">
-      <div class="feedback-modal-icon" id="feedbackModalIcon"><i data-lucide="check" style="width:28px;height:28px;"></i></div>
+      <div class="feedback-modal-icon" id="feedbackModalIcon"><i data-lucide="check"
+          style="width:28px;height:28px;"></i></div>
       <h2 class="feedback-modal-title" id="feedbackModalTitle">Sucesso!</h2>
       <p class="feedback-modal-text" id="feedbackModalMessage"></p>
       <button class="feedback-modal-button" onclick="closeFeedbackModal()">OK</button>
