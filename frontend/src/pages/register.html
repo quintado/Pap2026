@@ -286,6 +286,87 @@
       }
     }
 
+    /* Feedback Modal */
+    .feedback-modal-bg {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 11000;
+      padding: 24px;
+      opacity: 0;
+      transition: opacity 0.24s ease;
+    }
+
+    .feedback-modal-bg.show {
+      display: flex;
+      opacity: 1;
+    }
+
+    .feedback-modal-content {
+      width: min(480px, 100%);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98));
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+      padding: 32px 30px;
+      text-align: center;
+      transform: translateY(-20px) scale(0.98);
+      opacity: 0;
+      transition: transform 0.24s ease, opacity 0.24s ease;
+    }
+
+    .feedback-modal-bg.show .feedback-modal-content {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    .feedback-modal-icon {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
+    }
+
+    .feedback-modal-title {
+      margin: 0 0 12px;
+      font-size: 26px;
+      color: #f8fafc;
+      font-weight: 800;
+    }
+
+    .feedback-modal-text {
+      margin: 0 0 28px;
+      color: rgba(248, 250, 252, 0.8);
+      font-size: 15px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .feedback-modal-button {
+      background: linear-gradient(135deg, #4facfe, #2563eb);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 32px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .feedback-modal-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(79, 172, 254, 0.35);
+    }
+
     /* Mobile responsive */
     @media (max-width: 480px) {
       body { padding: 12px; }
@@ -319,6 +400,17 @@
 </head>
 
 <body>
+  <!-- Feedback Modal -->
+  <div id="feedbackModalBg" class="feedback-modal-bg"
+    onclick="if(event.target.id==='feedbackModalBg') closeFeedbackModal()">
+    <div class="feedback-modal-content">
+      <div class="feedback-modal-icon" id="feedbackModalIcon"><i data-lucide="check" style="width:28px;height:28px;"></i></div>
+      <h2 class="feedback-modal-title" id="feedbackModalTitle">Sucesso!</h2>
+      <p class="feedback-modal-text" id="feedbackModalMessage"></p>
+      <button class="feedback-modal-button" onclick="closeFeedbackModal()">OK</button>
+    </div>
+  </div>
+
   <div class="particle"></div>
   <div class="particle"></div>
   <div class="particle"></div>
@@ -403,6 +495,49 @@
     const strengthIndicator = document.getElementById("passwordStrength");
     const strengthBar = document.getElementById("strengthBar");
 
+    let feedbackModalTimeout = null;
+    let feedbackRedirect = null;
+
+    function showFeedbackModal(title, message, success) {
+      const modalBg = document.getElementById('feedbackModalBg');
+      const modalTitle = document.getElementById('feedbackModalTitle');
+      const modalMessage = document.getElementById('feedbackModalMessage');
+      const modalIcon = document.getElementById('feedbackModalIcon');
+
+      modalTitle.textContent = title;
+      modalMessage.textContent = message;
+      modalIcon.innerHTML = success
+        ? '<i data-lucide="check" style="width:28px;height:28px;"></i>'
+        : '<i data-lucide="alert-triangle" style="width:28px;height:28px;"></i>';
+      lucide.createIcons({ nodes: [modalIcon] });
+      modalIcon.style.background = success ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+      modalIcon.style.color = success ? '#22c55e' : '#f87171';
+      modalBg.style.display = 'flex';
+      requestAnimationFrame(() => modalBg.classList.add('show'));
+
+      clearTimeout(feedbackModalTimeout);
+      if (success) {
+        feedbackModalTimeout = setTimeout(() => {
+          closeFeedbackModal();
+          if (feedbackRedirect) window.location.href = feedbackRedirect;
+        }, 3000);
+      }
+    }
+
+    function closeFeedbackModal() {
+      const modalBg = document.getElementById('feedbackModalBg');
+      modalBg.classList.remove('show');
+      modalBg.addEventListener('transitionend', function handler() {
+        modalBg.style.display = 'none';
+        modalBg.removeEventListener('transitionend', handler);
+        if (feedbackRedirect && !modalBg.classList.contains('show')) {
+          window.location.href = feedbackRedirect;
+          feedbackRedirect = null;
+        }
+      });
+      clearTimeout(feedbackModalTimeout);
+    }
+
     passwordInput.addEventListener("input", function () {
       const password = this.value;
       strengthIndicator.style.display = password ? "block" : "none";
@@ -434,12 +569,12 @@
       const cargo = this.cargo.value.trim();
 
       if (!nome || !password || !confirmPassword || !cargo || !company) {
-        alert("Preencha todos os campos.");
+        showFeedbackModal('Atenção', 'Preencha todos os campos.', false);
         return;
       }
 
       if (password !== confirmPassword) {
-        alert("As palavras-passe não coincidem.");
+        showFeedbackModal('Atenção', 'As palavras-passe não coincidem.', false);
         return;
       }
 
@@ -462,7 +597,7 @@
         const data = await res.json();
 
         if (!res.ok) {
-          alert(data.message || "Erro ao criar conta.");
+          showFeedbackModal('Erro', data.message || 'Erro ao criar conta.', false);
           btnRegister.classList.remove("loading");
           btnRegister.textContent = "Criar Conta";
           return;
@@ -470,14 +605,11 @@
 
         btnRegister.textContent = "✓ Conta criada!";
         btnRegister.style.background = "linear-gradient(135deg, #10b981, #059669)";
-
-        setTimeout(() => {
-          alert("Conta criada com sucesso!");
-          window.location.href = "index.html";
-        }, 1000);
+        feedbackRedirect = 'index.html';
+        showFeedbackModal('Conta Criada!', 'A sua conta foi criada com sucesso. A redirecionar para o login...', true);
 
       } catch (err) {
-        alert("Erro ao contactar o servidor.");
+        showFeedbackModal('Erro', 'Erro ao contactar o servidor.', false);
         btnRegister.classList.remove("loading");
         btnRegister.textContent = "Criar Conta";
       }
