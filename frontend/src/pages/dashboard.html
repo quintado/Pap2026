@@ -445,29 +445,64 @@
     gradient.addColorStop(0, 'rgba(37, 99, 235, 0.3)');
     gradient.addColorStop(1, 'rgba(37, 99, 235, 0.05)');
 
+    // Calcular os labels dos últimos 7 dias no frontend (sem depender do servidor)
+    const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const diaSemana = diasSemana[d.getDay()];
+      const label = `${diaSemana} ${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}`;
+      last7Days.push(label);
+    }
+
     const dashboardChart = new Chart(ctx, {
       type: 'line',
       data: {
-        labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
-        datasets: [{
-          label: 'Entregas',
-          data: [0, 0, 0, 0, 0, 0, 0],
-          fill: true,
-          borderColor: '#2563eb',
-          backgroundColor: gradient,
-          tension: 0.4,
-          pointBackgroundColor: '#2563eb',
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          pointRadius: 5,
-          pointHoverRadius: 7
-        }]
+        labels: last7Days,
+        datasets: [
+          {
+            label: 'Total Entregas',
+            data: [0, 0, 0, 0, 0, 0, 0],
+            fill: true,
+            borderColor: '#2563eb',
+            backgroundColor: gradient,
+            tension: 0.4,
+            pointBackgroundColor: '#2563eb',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7
+          },
+          {
+            label: 'Concluídas',
+            data: [0, 0, 0, 0, 0, 0, 0],
+            fill: false,
+            borderColor: '#22c55e',
+            backgroundColor: 'transparent',
+            borderDash: [5, 3],
+            tension: 0.4,
+            pointBackgroundColor: '#22c55e',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }
+        ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { display: false },
+          legend: {
+            display: true,
+            labels: {
+              color: '#94a3b8',
+              font: { size: 12 },
+              usePointStyle: true,
+              pointStyleWidth: 10
+            }
+          },
           tooltip: {
             backgroundColor: 'rgba(15, 23, 42, 0.9)',
             padding: 12,
@@ -537,10 +572,16 @@
         activeTrucksEl.textContent = stats.activeTrucks ?? 0;
 
         if (Array.isArray(stats.chartData) && stats.chartData.length > 0) {
-          const labels = stats.chartData.map(entry => entry.month || 'N/A');
-          const values = stats.chartData.map(entry => Number(entry.deliveries || 0));
-          dashboardChart.data.labels = labels;
-          dashboardChart.data.datasets[0].data = values;
+          // Mapear dados do API pelos labels pré-calculados no frontend
+          const dataByLabel = {};
+          stats.chartData.forEach(entry => {
+            dataByLabel[entry.month] = entry;
+          });
+          const totalValues = last7Days.map(label => Number(dataByLabel[label]?.deliveries || 0));
+          const completedValues = last7Days.map(label => Number(dataByLabel[label]?.completed || 0));
+          // Não substituir labels — mantém os gerados no frontend
+          dashboardChart.data.datasets[0].data = totalValues;
+          dashboardChart.data.datasets[1].data = completedValues;
           dashboardChart.update();
         }
       } catch (error) {

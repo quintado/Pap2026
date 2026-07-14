@@ -470,7 +470,10 @@
         map[dateStr].push(ev);
       }
 
-      allDeliveries.forEach(d => {
+      // Excluir entregas concluídas do calendário
+      const activeDeliveries = allDeliveries.filter(d => d.estado !== 'concluido');
+
+      activeDeliveries.forEach(d => {
         const workerName = d.worker?.name || (d.assigned_to ? `#${d.assigned_to}` : 'Sem camionista');
 
         if (d.data_saida) {

@@ -48,7 +48,7 @@
       font-family: 'Outfit', sans-serif;
       font-size: 28px;
       font-weight: 800;
-      background: linear-gradient(135deg, #667eea, #f093fb);
+      background: linear-gradient(135deg, #3b82f6, #0ea5e9);
       -webkit-background-clip: text;
       -webkit-background-clip: text;
       background-clip: text;
@@ -698,9 +698,15 @@
     }
 
     @media (max-width: 1024px) {
-      .sidebar { width: 220px; }
-      .main { margin-left: 220px; }
+      .sidebar {
+        width: 220px;
+      }
+
+      .main {
+        margin-left: 220px;
+      }
     }
+
     /* Mobile layout handled by responsive.css */
 
     /* Custom select component styles */
@@ -894,7 +900,8 @@
   <div id="feedbackModalBg" class="feedback-modal-bg"
     onclick="if(event.target.id==='feedbackModalBg') closeFeedbackModal()">
     <div class="feedback-modal-content">
-      <div class="feedback-modal-icon" id="feedbackModalIcon"><i data-lucide="check" style="width:28px;height:28px;"></i></div>
+      <div class="feedback-modal-icon" id="feedbackModalIcon"><i data-lucide="check"
+          style="width:28px;height:28px;"></i></div>
       <h2 class="feedback-modal-title" id="feedbackModalTitle">Sucesso!</h2>
       <p class="feedback-modal-text" id="feedbackModalMessage">Entrega criada com sucesso!</p>
       <button class="feedback-modal-button" onclick="closeFeedbackModal()">OK</button>
@@ -913,7 +920,8 @@
       <li><a class="active" href="entregas.html"><i data-lucide="package" style="width: 18px; height: 18px;"></i>
           Entregas</a></li>
       <li><a href="camioes.html"><i data-lucide="truck" style="width: 18px; height: 18px;"></i> Camiões</a></li>
-      <li><a href="calendario.html"><i data-lucide="calendar" style="width: 18px; height: 18px;"></i> Calendário</a></li>
+      <li><a href="calendario.html"><i data-lucide="calendar" style="width: 18px; height: 18px;"></i> Calendário</a>
+      </li>
       <li><a href="config.html"><i data-lucide="settings" style="width: 18px; height: 18px;"></i> Configurações</a></li>
     </ul>
     <div class="sidebar-footer">
@@ -957,8 +965,8 @@
         <input type="text" id="searchDestino" placeholder="Ex: Porto...">
       </div>
       <div class="filter-group">
-        <label><i data-lucide="user"
-            style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i> Trabalhador</label>
+        <label><i data-lucide="user" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i>
+          Trabalhador</label>
         <input type="text" id="searchWorker" placeholder="Nome do camionista...">
       </div>
       <div class="filter-group">
@@ -1059,12 +1067,14 @@
 
         <div class="form-group">
           <label>Data de Saída</label>
-          <input type="date" id="dataSaida">
+          <input type="date" id="dataSaida" onchange="updateDataPrevistaMin()">
         </div>
 
         <div class="form-group">
           <label>Data Prevista</label>
           <input type="date" id="dataPrevista">
+          <small id="dataPrevistaHint" style="font-size:11px; color:#94a3b8; margin-top:4px; display:block;">Deve ser
+            posterior à data de saída.</small>
         </div>
 
         <div class="form-group">
@@ -1126,7 +1136,12 @@
         <input type="hidden" id="finishTruckId">
         <div class="form-group">
           <label>Quilometragem Final *</label>
-          <input type="number" id="finalMileage" required placeholder="Ex: 125500">
+          <input type="number" id="finalMileage" required placeholder="Ex: 125500" min="0">
+          <div id="currentMileageHint"
+            style="margin-top:8px; padding:8px 12px; background:rgba(96,165,250,0.1); border:1px solid rgba(96,165,250,0.3); border-radius:8px; font-size:13px; color:#60a5fa; display:none;">
+            ⚠️ O camião tem atualmente <strong id="currentMileageValue"></strong> km &mdash; introduza um valor
+            <strong>superior</strong>.
+          </div>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn-secondary" onclick="closeFinishModal()">Cancelar</button>
@@ -1144,6 +1159,9 @@
     const isWorker = user.role?.toLowerCase() === "camionista";
     let editingDeliveryId = null;
     let allDeliveries = [];
+    // Variável global para guardar os km atuais do camião ao finalizar entrega
+    // Usar variável JS em vez de input hidden para não ser apagada por form.reset()
+    let currentTruckMileage = 0;
 
     if (isManager) {
       document.getElementById("addDeliveryBtn").style.display = "flex";
@@ -1204,7 +1222,17 @@
         const dataPrevista = delivery.data_prevista ? new Date(delivery.data_prevista).toLocaleDateString('pt-PT') : "N/A";
 
         let workerInfo = "";
-        if (delivery.worker) {
+        if (delivery.estado === 'concluido') {
+          // Entrega concluída — mostrar quem a fez
+          if (delivery.worker) {
+            workerInfo = `
+              <div style="color: #4ade80; font-weight: 600; font-size: 12px; margin-bottom:2px;">✅ Entregue por</div>
+              <div style="font-size: 14px; color: #60a5fa; font-weight:700;">${delivery.worker.name}</div>
+            `;
+          } else {
+            workerInfo = `<div style="color: #4ade80; font-size: 13px; font-weight: 500;">✅ Entrega concluída</div>`;
+          }
+        } else if (delivery.worker) {
           workerInfo = `
             <div style="color: var(--text-primary); font-weight: 600; font-size: 13px;">Camionista</div>
             <div style="font-size: 14px; color: #60a5fa;">${delivery.worker.name}</div>
@@ -1233,8 +1261,10 @@
           <td>
             <div style="margin-bottom: 8px;">${workerInfo}</div>
             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-              ${isManager ? `
+              ${isManager && delivery.estado !== 'concluido' ? `
                 <button class="action-btn" onclick="editDelivery(${delivery.id})" title="Editar"><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'/><path d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'/></svg></button>
+              ` : ''}
+              ${isManager ? `
                 <button class="action-btn delete" onclick="deleteDelivery(${delivery.id})" title="Eliminar"><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6'/><path d='M10 11v6'/><path d='M14 11v6'/><path d='M9 6V4h6v2'/></svg></button>
               ` : ''}
               ${isWorker && delivery.estado === 'pendente' ? `
@@ -1298,6 +1328,10 @@
       editingDeliveryId = null;
       document.getElementById("modalTitle").textContent = "Nova Entrega";
       document.getElementById("deliveryForm").reset();
+      // Definir min de dataSaida para hoje
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById("dataSaida").min = today;
+      document.getElementById("dataPrevista").min = "";
       document.getElementById("deliveryModal").style.display = "flex";
     });
 
@@ -1317,10 +1351,20 @@
       document.getElementById("destino").value = delivery.destino;
       document.getElementById("estado").value = delivery.estado;
 
+      // Definir min de dataSaida para hoje (mesmo ao editar não pode ir para o passado)
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById("dataSaida").min = today;
+
       if (delivery.data_saida) {
-        document.getElementById("dataSaida").value = new Date(delivery.data_saida).toISOString().split('T')[0];
+        const saida = new Date(delivery.data_saida).toISOString().split('T')[0];
+        document.getElementById("dataSaida").value = saida;
+        // Calcular dia seguinte à saída para min da prevista
+        const nextDay = new Date(delivery.data_saida);
+        nextDay.setDate(nextDay.getDate() + 1);
+        document.getElementById("dataPrevista").min = nextDay.toISOString().split('T')[0];
       } else {
         document.getElementById("dataSaida").value = "";
+        document.getElementById("dataPrevista").min = "";
       }
 
       if (delivery.data_prevista) {
@@ -1333,15 +1377,70 @@
       document.getElementById("deliveryModal").style.display = "flex";
     }
 
+    function updateDataPrevistaMin() {
+      const dataSaidaVal = document.getElementById("dataSaida").value;
+      const dataPrevistaInput = document.getElementById("dataPrevista");
+      if (dataSaidaVal) {
+        // Data prevista deve ser obrigatoriamente depois da data de saída
+        const nextDay = new Date(dataSaidaVal);
+        nextDay.setDate(nextDay.getDate() + 1);
+        const minPrevista = nextDay.toISOString().split('T')[0];
+        dataPrevistaInput.min = minPrevista;
+        // Se a data prevista já selecionada for inválida, limpar
+        if (dataPrevistaInput.value && dataPrevistaInput.value <= dataSaidaVal) {
+          dataPrevistaInput.value = "";
+        }
+      } else {
+        dataPrevistaInput.min = "";
+      }
+    }
+
     document.getElementById("deliveryForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
       const dataSaida = document.getElementById("dataSaida").value;
       const dataPrevista = document.getElementById("dataPrevista").value;
+      const today = new Date().toISOString().split('T')[0];
 
-      // Validar datas no cliente
-      if (dataSaida && dataPrevista && new Date(dataSaida) >= new Date(dataPrevista)) {
-        showFeedbackModal('Atenção', 'A data de saída deve ser anterior à data prevista.', false);
+      // Validação: data de saída não pode ser no passado
+      if (dataSaida && dataSaida < today) {
+        Swal.fire({
+          title: 'Data inválida',
+          text: 'A data de saída não pode ser anterior ao dia de hoje.',
+          icon: 'warning',
+          background: '#1e293b',
+          color: '#fff',
+          confirmButtonColor: '#3b82f6',
+          confirmButtonText: 'Corrigir'
+        });
+        return;
+      }
+
+      // Validação: data prevista deve ser obrigatoriamente depois da data de saída
+      if (dataSaida && dataPrevista && dataPrevista <= dataSaida) {
+        Swal.fire({
+          title: 'Data inválida',
+          text: 'A data prevista deve ser obrigatoriamente posterior à data de saída.',
+          icon: 'warning',
+          background: '#1e293b',
+          color: '#fff',
+          confirmButtonColor: '#3b82f6',
+          confirmButtonText: 'Corrigir'
+        });
+        return;
+      }
+
+      // Validação: se só a data prevista foi preenchida sem data de saída, avisar
+      if (!dataSaida && dataPrevista) {
+        Swal.fire({
+          title: 'Data em falta',
+          text: 'Preencha primeiro a data de saída antes de definir a data prevista.',
+          icon: 'warning',
+          background: '#1e293b',
+          color: '#fff',
+          confirmButtonColor: '#3b82f6',
+          confirmButtonText: 'Corrigir'
+        });
         return;
       }
 
@@ -1369,7 +1468,11 @@
 
         const result = await res.json();
         if (!res.ok) {
-          showFeedbackModal('Erro', result.message || 'Erro ao guardar entrega.', false);
+          if (res.status === 409) {
+            showFeedbackModal('⚠️ Entrega Duplicada', result.message, false);
+          } else {
+            showFeedbackModal('Erro', result.message || 'Erro ao guardar entrega.', false);
+          }
           return;
         }
 
@@ -1527,6 +1630,9 @@
           showFeedbackModal('Sucesso!', 'Pedido enviado com sucesso!', true);
           closeRequestModal();
           loadDeliveries();
+        } else if (res.status === 409) {
+          // Conflito de datas — mensagem específica sem "Erro:"
+          showFeedbackModal('⚠️ Conflito de Datas', data.message, false);
         } else {
           showFeedbackModal('Erro', 'Erro: ' + data.message, false);
         }
@@ -1667,6 +1773,10 @@
           if (document.getElementById("notificationDropdown").classList.contains("active")) {
             renderRequestsList();
           }
+        } else if (res.status === 409) {
+          // Conflito de datas — mensagem de aviso clara para o gestor
+          showFeedbackModal('⚠️ Conflito de Datas', data.message, false);
+          closeDetailModal();
         } else {
           showFeedbackModal('Erro', 'Erro: ' + data.message, false);
         }
@@ -1675,22 +1785,56 @@
       }
     }
 
-    function openFinishModal(deliveryId, truckId) {
+    async function openFinishModal(deliveryId, truckId, truckMileage) {
+      // Reset do estado
+      currentTruckMileage = (truckId && truckMileage > 0) ? truckMileage : 0;
       document.getElementById("finishDeliveryId").value = deliveryId;
       document.getElementById("finishTruckId").value = truckId || "";
+      document.getElementById("finalMileage").value = "";
       document.getElementById("finishDeliveryModal").style.display = "flex";
+
+      if (truckId && currentTruckMileage > 0) {
+        // Usar o mileage já disponível no objeto da entrega — sem fetch
+        document.getElementById("finalMileage").min = currentTruckMileage + 1;
+        document.getElementById("currentMileageValue").textContent = currentTruckMileage.toLocaleString('pt-PT');
+        document.getElementById("currentMileageHint").style.display = "block";
+      } else {
+        document.getElementById("finalMileage").min = 1;
+        document.getElementById("currentMileageHint").style.display = "none";
+      }
     }
 
     function closeFinishModal() {
       document.getElementById("finishDeliveryModal").style.display = "none";
-      document.getElementById("finishDeliveryForm").reset();
+      // Reset manual dos campos (não usar form.reset() pois apagaria o min do input)
+      document.getElementById("finalMileage").value = "";
+      document.getElementById("finalMileage").min = 1;
+      document.getElementById("finishDeliveryId").value = "";
+      document.getElementById("finishTruckId").value = "";
+      document.getElementById("currentMileageHint").style.display = "none";
+      currentTruckMileage = 0;
     }
 
     document.getElementById("finishDeliveryForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const deliveryId = document.getElementById("finishDeliveryId").value;
       const truckId = document.getElementById("finishTruckId").value;
-      const finalMileage = document.getElementById("finalMileage").value;
+      const finalMileageRaw = document.getElementById("finalMileage").value;
+      const finalMileage = parseInt(finalMileageRaw);
+
+      // Validação client-side: km finais devem ser superiores aos km atuais do camião
+      if (truckId && currentTruckMileage > 0 && finalMileage <= currentTruckMileage) {
+        Swal.fire({
+          title: 'Quilometragem inválida',
+          html: `A quilometragem final <strong>${finalMileage.toLocaleString('pt-PT')} km</strong> não pode ser inferior ou igual à quilometragem atual do camião <strong>${currentTruckMileage.toLocaleString('pt-PT')} km</strong>.<br><br>Os quilómetros de um veículo só podem aumentar.`,
+          icon: 'error',
+          background: '#1e293b',
+          color: '#fff',
+          confirmButtonColor: '#3b82f6',
+          confirmButtonText: 'Corrigir'
+        });
+        return;
+      }
 
       console.log("Finalizando entrega:", { deliveryId, truckId, finalMileage, workerId: user.id });
 

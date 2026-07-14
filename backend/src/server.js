@@ -491,6 +491,21 @@ app.post("/create-delivery", validateDelivery, async (req, res) => {
 
   console.log(`[CREATE DELIVERY] Início: createdBy=${createdBy}`);
 
+  // Validação de datas
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  if (dataSaida) {
+    const saida = new Date(dataSaida); saida.setHours(0, 0, 0, 0);
+    if (saida < today) {
+      return res.status(400).json({ message: "A data de saída não pode ser anterior ao dia de hoje." });
+    }
+    if (dataPrevista) {
+      const prevista = new Date(dataPrevista); prevista.setHours(0, 0, 0, 0);
+      if (prevista <= saida) {
+        return res.status(400).json({ message: "A data prevista deve ser obrigatoriamente posterior à data de saída." });
+      }
+    }
+  }
+
   try {
     const { data: creator } = await supabase
       .from("users")
@@ -508,6 +523,24 @@ app.post("/create-delivery", validateDelivery, async (req, res) => {
       company: creator.company,
       createdBy
     });
+
+    // Verificar se já existe uma entrega com os mesmos campos (evitar duplicados)
+    const { data: existing } = await supabase
+      .from("deliveries")
+      .select("id, estado")
+      .eq("company", creator.company)
+      .eq("tipo", tipo)
+      .eq("origem", origem)
+      .eq("destino", destino)
+      .eq("data_saida", dataSaida || null)
+      .eq("data_prevista", dataPrevista || null)
+      .neq("estado", "concluido");  // ignorar entregas já concluídas
+
+    if (existing && existing.length > 0) {
+      return res.status(409).json({
+        message: `Já existe uma entrega ativa com os mesmos dados: ${tipo} de ${origem} para ${destino} (${dataSaida ? new Date(dataSaida).toLocaleDateString('pt-PT') : '—'} → ${dataPrevista ? new Date(dataPrevista).toLocaleDateString('pt-PT') : '—'}). Não é possível criar entregas duplicadas.`
+      });
+    }
 
     const { error } = await supabase.from("deliveries").insert([
       {
@@ -556,6 +589,21 @@ app.get("/deliveries/:id", async (req, res) => {
 app.put("/update-delivery/:id", validateDelivery, async (req, res) => {
   const { tipo, origem, destino, estado, dataPrevista, dataSaida, observacoes, updatedBy } = req.body;
   const deliveryId = req.params.id;
+
+  // Validação de datas
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  if (dataSaida) {
+    const saida = new Date(dataSaida); saida.setHours(0, 0, 0, 0);
+    if (saida < today) {
+      return res.status(400).json({ message: "A data de saída não pode ser anterior ao dia de hoje." });
+    }
+    if (dataPrevista) {
+      const prevista = new Date(dataPrevista); prevista.setHours(0, 0, 0, 0);
+      if (prevista <= saida) {
+        return res.status(400).json({ message: "A data prevista deve ser obrigatoriamente posterior à data de saída." });
+      }
+    }
+  }
 
   try {
     const { data: updater } = await supabase
@@ -723,6 +771,48 @@ app.post("/request-delivery", async (req, res) => {
       return res.status(403).json({ message: "Camião não está disponível." });
     }
 
+    // Buscar a entrega que está a ser pedida para obter as suas datas
+    const { data: newDelivery, error: newDeliveryErr } = await supabase
+      .from("deliveries")
+      .select("id, data_saida, data_prevista, tipo, origem, destino")
+      .eq("id", parseInt(deliveryId))
+      .single();
+
+    if (newDeliveryErr || !newDelivery) {
+      return res.status(404).json({ message: "Entrega não encontrada." });
+    }
+
+    const newStart = newDelivery.data_saida ? new Date(newDelivery.data_saida) : null;
+    const newEnd   = newDelivery.data_prevista ? new Date(newDelivery.data_prevista) : null;
+
+    // Só validar conflito se a entrega tiver datas definidas
+    if (newStart && newEnd) {
+      // Buscar todas as entregas activas deste camionista (em-curso ou pendente com ele atribuído)
+      const { data: activeDeliveries } = await supabase
+        .from("deliveries")
+        .select("id, data_saida, data_prevista, tipo, origem, destino, estado")
+        .eq("assigned_to", parseInt(workerId))
+        .in("estado", ["em-curso", "pendente"]);
+
+      const conflict = (activeDeliveries || []).find(d => {
+        const dStart = d.data_saida ? new Date(d.data_saida) : null;
+        const dEnd   = d.data_prevista ? new Date(d.data_prevista) : null;
+        if (!dStart || !dEnd) return false;
+        // Sobreposição: nova entrega começa antes da existente acabar E acaba depois dela começar
+        return newStart <= dEnd && newEnd >= dStart;
+      });
+
+      if (conflict) {
+        const conflictStart = conflict.data_saida
+          ? new Date(conflict.data_saida).toLocaleDateString('pt-PT') : '—';
+        const conflictEnd   = conflict.data_prevista
+          ? new Date(conflict.data_prevista).toLocaleDateString('pt-PT') : '—';
+        return res.status(409).json({
+          message: `Não é possível aceitar esta entrega. Já tens uma entrega atribuída de ${conflict.origem} para ${conflict.destino} entre ${conflictStart} e ${conflictEnd} que coincide com este período.`
+        });
+      }
+    }
+
     const { error } = await supabase.from("delivery_requests").insert([
       {
         delivery_id: deliveryId,
@@ -805,6 +895,40 @@ app.post("/respond-request", async (req, res) => {
     }
 
     if (approved) {
+      // Buscar a entrega deste pedido para verificar as suas datas
+      const { data: targetDelivery } = await supabase
+        .from("deliveries")
+        .select("id, data_saida, data_prevista, origem, destino")
+        .eq("id", request.delivery_id)
+        .single();
+
+      // Validar conflito de datas com outras entregas activas do mesmo camionista
+      if (targetDelivery?.data_saida && targetDelivery?.data_prevista) {
+        const newStart = new Date(targetDelivery.data_saida);
+        const newEnd   = new Date(targetDelivery.data_prevista);
+
+        const { data: activeDeliveries } = await supabase
+          .from("deliveries")
+          .select("id, data_saida, data_prevista, origem, destino, estado")
+          .eq("assigned_to", request.worker_id)
+          .eq("estado", "em-curso");
+
+        const conflict = (activeDeliveries || []).find(d => {
+          if (!d.data_saida || !d.data_prevista) return false;
+          const dStart = new Date(d.data_saida);
+          const dEnd   = new Date(d.data_prevista);
+          return newStart <= dEnd && newEnd >= dStart;
+        });
+
+        if (conflict) {
+          const conflictStart = new Date(conflict.data_saida).toLocaleDateString('pt-PT');
+          const conflictEnd   = new Date(conflict.data_prevista).toLocaleDateString('pt-PT');
+          return res.status(409).json({
+            message: `Não é possível aprovar esta entrega. O camionista já tem uma entrega activa de ${conflict.origem} para ${conflict.destino} entre ${conflictStart} e ${conflictEnd}, que coincide com este período.`
+          });
+        }
+      }
+
       await supabase
         .from("delivery_requests")
         .update({ status: "aprovada" })
@@ -847,11 +971,30 @@ app.post("/respond-request", async (req, res) => {
   }
 });
 
+app.get("/trucks/:id", async (req, res) => {
+  const truckId = parseInt(req.params.id);
+  if (!Number.isInteger(truckId) || truckId <= 0) {
+    return res.status(400).json({ message: "ID de camião inválido." });
+  }
+  try {
+    const { data, error } = await supabase
+      .from("trucks")
+      .select("id, plate, model, mileage, status")
+      .eq("id", truckId)
+      .single();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ message: "Camião não encontrado." });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: "Erro ao obter camião: " + err.message });
+  }
+});
+
 app.post("/complete-delivery", async (req, res) => {
-  const { deliveryId, truckId, finalMileage, workerId } = req.body;
+  const { deliveryId, finalMileage, workerId } = req.body;
 
   try {
-    // Validação de campos
+    // Validação básica de campos
     if (!deliveryId || finalMileage === undefined || finalMileage === null) {
       return res.status(400).json({ message: "Faltam parâmetros obrigatórios." });
     }
@@ -863,89 +1006,92 @@ app.post("/complete-delivery", async (req, res) => {
       return res.status(400).json({ message: "Quilometragem final inválida (valor demasiado alto)." });
     }
 
-    // Atualizar camião (se fornecido) e depois apagar a entrega da BD
+    // Buscar a entrega na BD para obter truck_id e assigned_to reais
+    const { data: deliveryData, error: deliveryFetchError } = await supabase
+      .from("deliveries")
+      .select("id, truck_id, assigned_to")
+      .eq("id", parseInt(deliveryId))
+      .single();
 
-    // Se houver truckId, atualizar camião
-    if (truckId) {
-      // Buscar quilometragem anterior do camião para calcular a diferença
+    if (deliveryFetchError || !deliveryData) {
+      return res.status(404).json({ message: "Entrega não encontrada." });
+    }
+
+    const realTruckId = deliveryData.truck_id;
+    const originalWorkerId = deliveryData.assigned_to; // guardar para preservar no historial
+    let maintenanceFlag = false;
+
+    if (realTruckId) {
+      // Buscar quilometragem ATUAL do camião directamente da BD
       const { data: truckData, error: fetchError } = await supabase
         .from("trucks")
         .select("mileage, mileage_since_maintenance")
-        .eq("id", parseInt(truckId))
+        .eq("id", realTruckId)
         .single();
 
-      if (fetchError && !fetchError.message.includes('mileage_since_maintenance')) {
-        throw fetchError;
+      if (fetchError) {
+        console.error("[COMPLETE DELIVERY] Erro ao buscar camião:", fetchError);
+        return res.status(500).json({ message: "Erro ao verificar quilometragem do camião." });
       }
 
-      const currentMileage = truckData?.mileage || 0;
-      // Se mileage_since_maintenance for null, inicializar com base na quilometragem atual
-      // usando módulo 20000 para respeitar ciclos anteriores já cumpridos
+      const currentMileage = typeof truckData?.mileage === 'number' ? truckData.mileage : 0;
+      console.log(`[COMPLETE DELIVERY] Camião ${realTruckId}: km_atual=${currentMileage}, km_finais=${mileageNum}`);
+
+      // VALIDAÇÃO: km finais têm de ser ESTRITAMENTE maiores que os km atuais
+      if (mileageNum <= currentMileage) {
+        return res.status(400).json({
+          message: `Quilometragem inválida! O camião tem actualmente ${currentMileage.toLocaleString('pt-PT')} km. O valor introduzido (${mileageNum.toLocaleString('pt-PT')} km) tem de ser superior.`
+        });
+      }
+
       const currentMaintenanceKm = (truckData?.mileage_since_maintenance != null)
         ? truckData.mileage_since_maintenance
         : (currentMileage % 20000);
-      const mileageIncrease = Math.max(0, parseInt(finalMileage) - currentMileage);
+      const mileageIncrease = mileageNum - currentMileage;
       const newMileageSinceMaintenance = currentMaintenanceKm + mileageIncrease;
-
-      // Se acumulou >= 20000 km desde a última manutenção, bloquear o camião
       const needsMaintenance = newMileageSinceMaintenance >= 20000;
+      maintenanceFlag = needsMaintenance;
 
-      // Preparar objeto de atualização
       const updateData = {
-        mileage: parseInt(finalMileage),
+        mileage: mileageNum,
         status: needsMaintenance ? "manutencao" : "disponivel",
         assigned_to: null
       };
-
-      // Adicionar mileage_since_maintenance apenas se a coluna existir
       if (truckData && 'mileage_since_maintenance' in truckData) {
         updateData.mileage_since_maintenance = newMileageSinceMaintenance;
       }
 
-      console.log(`[COMPLETE DELIVERY] Camião ${truckId}: km_manutencao=${newMileageSinceMaintenance}, precisa_manutencao=${needsMaintenance}`);
+      console.log(`[COMPLETE DELIVERY] Camião ${realTruckId}: km_manutencao=${newMileageSinceMaintenance}, precisa_manutencao=${needsMaintenance}`);
 
       const { error: truckError } = await supabase
         .from("trucks")
         .update(updateData)
-        .eq("id", parseInt(truckId));
+        .eq("id", realTruckId);
 
       if (truckError) {
         console.error("[COMPLETE DELIVERY] Erro ao atualizar camião:", truckError);
       }
-
-      // Se o camião precisa de manutenção, vamos sinalizar isso depois de apagar a entrega
-      const maintenanceFlag = needsMaintenance;
-
-      // Apagar a entrega da base de dados (já concluída)
-      const { error: deleteError } = await supabase
-        .from("deliveries")
-        .delete()
-        .eq("id", parseInt(deliveryId));
-
-      if (deleteError) {
-        throw deleteError;
-      }
-
-      // Informar o frontend se o camião precisa de manutenção
-      if (maintenanceFlag) {
-        return res.json({
-          message: "Entrega finalizada com sucesso!",
-          maintenanceRequired: true,
-          truckId: parseInt(truckId)
-        });
-      }
     }
 
-    // Se não houve camião associado, apenas apagar a entrega
-    if (!truckId) {
-      const { error: deleteError } = await supabase
-        .from("deliveries")
-        .delete()
-        .eq("id", parseInt(deliveryId));
+    // Marcar entrega como concluída (NÃO apagar)
+    // Apenas muda o estado — truck_id e assigned_to são preservados como historial
+    // (o camião já foi libertado na tabela trucks acima)
+    const { data: updatedDelivery, error: updateDeliveryError } = await supabase
+      .from("deliveries")
+      .update({ estado: "concluido" })
+      .eq("id", parseInt(deliveryId))
+      .select();
 
-      if (deleteError) {
-        throw deleteError;
-      }
+    console.log(`[COMPLETE DELIVERY] Entrega ${deliveryId} marcada como concluida:`, updatedDelivery, "Erro:", updateDeliveryError);
+
+    if (updateDeliveryError) throw updateDeliveryError;
+
+    if (maintenanceFlag) {
+      return res.json({
+        message: "Entrega finalizada com sucesso!",
+        maintenanceRequired: true,
+        truckId: realTruckId
+      });
     }
 
     res.json({ message: "Entrega finalizada com sucesso!" });
@@ -1305,36 +1451,53 @@ async function getDeliveriesChartData(workerId) {
 
 async function getCompanyDeliveriesChartData(company) {
   try {
-    const { data: users } = await supabase
-      .from("users")
-      .select("id")
-      .eq("company", company);
+    const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-    if (!users || users.length === 0) return [];
+    // Gerar os últimos 7 dias com o mesmo formato de label que o frontend
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const diaSemana = diasSemana[d.getDay()];
+      const dd = d.getDate().toString().padStart(2, '0');
+      const mm = (d.getMonth() + 1).toString().padStart(2, '0');
+      const yyyy = d.getFullYear();
+      days.push({
+        label: `${diaSemana} ${dd}/${mm}`,
+        dateStr: `${yyyy}-${mm}-${dd}`,
+        total: 0,
+        concluidas: 0
+      });
+    }
 
-    const userIds = users.map(u => u.id);
+    const since = `${days[0].dateStr}T00:00:00.000Z`;
 
     const { data } = await supabase
       .from("deliveries")
-      .select("created_at, status, assigned_to")
-      .in("assigned_to", userIds)
-      .order("created_at", { ascending: true });
+      .select("created_at, estado")
+      .eq("company", company)
+      .gte("created_at", since);
 
-    // Agrupar por mês
-    const monthlyData = {};
-    data?.forEach(delivery => {
-      const month = new Date(delivery.created_at).toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' });
-      if (!monthlyData[month]) {
-        monthlyData[month] = 0;
+    (data || []).forEach(delivery => {
+      const d = new Date(delivery.created_at);
+      const dd = d.getUTCDate().toString().padStart(2, '0');
+      const mm = (d.getUTCMonth() + 1).toString().padStart(2, '0');
+      const yyyy = d.getUTCFullYear();
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+      const day = days.find(x => x.dateStr === dateStr);
+      if (day) {
+        day.total++;
+        if (delivery.estado === 'concluido') day.concluidas++;
       }
-      monthlyData[month]++;
     });
 
-    return Object.keys(monthlyData).map(month => ({
-      month,
-      deliveries: monthlyData[month]
+    return days.map(d => ({
+      month: d.label,
+      deliveries: d.total,
+      completed: d.concluidas
     }));
   } catch (err) {
+    console.error('[CHART DATA] Erro:', err);
     return [];
   }
 }
